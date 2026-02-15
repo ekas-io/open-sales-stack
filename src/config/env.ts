@@ -10,7 +10,8 @@ const envSchema = z.object({
     .string()
     .min(32, "API_KEY must be at least 32 characters. Use a strong random key."),
   CORS_ORIGIN: z.string().optional(),
-  CORESIGNAL_API_KEY: z.string().min(1, "CORESIGNAL_API_KEY is required")
+  CORESIGNAL_API_KEY: z.string().min(1, "CORESIGNAL_API_KEY is required"),
+  FIRECRAWL_API_KEY: z.string().min(1, "FIRECRAWL_API_KEY is required"),
 });
 
 const parsed = envSchema.safeParse(process.env);

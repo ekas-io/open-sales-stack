@@ -1,6 +1,7 @@
 import type { McpToolDefinition } from "../types";
 import { tool as getCompanyDetails } from "./get-company-details";
 import { tool as getPeopleDetails } from "./get-people-details";
+import { tool as getStructuredInfo } from "./get-structured-info";
 
 /**
  * All MCP tools to expose.
@@ -15,4 +16,5 @@ import { tool as getPeopleDetails } from "./get-people-details";
 export const mcpTools: McpToolDefinition[] = [
   getPeopleDetails,
   getCompanyDetails,
+  getStructuredInfo,
 ];

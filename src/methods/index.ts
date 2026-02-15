@@ -1,3 +1,4 @@
+import { getStructuredInfo } from "./crawler/get-structured-info";
 import { crawlerHelloMethod } from "./crawler/hello";
 import { crmHelloMethod } from "./crm/hello";
 import { getCompanyDetails } from "./data/coresignal/company/get-company-details";
@@ -10,7 +11,8 @@ const allMethods = [
   crawlerHelloMethod,
   crmHelloMethod,
   getPeopleDetails,
-  getCompanyDetails
+  getCompanyDetails,
+  getStructuredInfo
 ];
 
 export const methodRegistry = new Map<string, RegisteredMethod>(
