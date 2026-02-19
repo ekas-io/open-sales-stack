@@ -1,16 +1,33 @@
 import { z } from "zod";
 import { env } from "../../../../config/env";
 import type { Domain, MethodDefinition } from "../../../types";
+import { logger } from "../../../../lib/logger";
+
+const CORESIGNAL_BASE_URL =
+  "https://api.coresignal.com/cdapi/v2/employee_multi_source";
 
 const peopleDetailsInputSchema = z.object({
-  linkedin_url: z.string().url().min(1, "linkedin_url is required")
+  linkedin_url: z
+    .string()
+    .url()
+    .min(1, "linkedin_url is required")
+    .describe(
+      "The full LinkedIn profile URL of the person to look up " +
+        "(e.g. 'https://www.linkedin.com/in/john-doe-123456')."
+    ),
 });
 
 type PeopleDetailsOutput = {
-  results: unknown[];
-  total: number;
+  data: unknown;
   timestamp: string;
 };
+
+function coresignalHeaders(): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    apikey: env.CORESIGNAL_API_KEY,
+  };
+}
 
 export function createPeopleDetails(
   domain: Domain
@@ -18,49 +35,86 @@ export function createPeopleDetails(
   return {
     domain,
     name: "coresignal.people.get_details",
-    description: "Get all possible details about an employee from LinkedIn using. Use this tool when your running a prospect research and need to learn more about the person, like their company, title, location, linkedin posts, experience, details about their current company etc.",
+    description:
+      "Get all possible details about an employee from LinkedIn. Use this tool when " +
+      "you're running prospect research and need to learn more about a person — their " +
+      "company, title, location, LinkedIn posts, experience, skills, details about " +
+      "their current company, etc.",
     inputSchema: peopleDetailsInputSchema,
+
     async execute(input, _context) {
-      const url = "https://api.coresignal.com/cdapi/v2/employee_multi_source/search/es_dsl";
-      
-      const requestBody = {
+      // ── 1. Search: LinkedIn URL → employee ID(s) ───────────────────
+      const searchBody = {
         query: {
           bool: {
             must: [
-              {
-                match_phrase: {
-                  linkedin_url: input.linkedin_url
-                }
-              }
-            ]
-          }
-        }
+              { match_phrase: { linkedin_url: input.linkedin_url } },
+            ],
+          },
+        },
       };
 
-      const response = await fetch(url, {
+      logger.info(
+        { linkedin_url: input.linkedin_url },
+        "Coresignal people search"
+      );
+
+      const searchResponse = await fetch(`${CORESIGNAL_BASE_URL}/search/es_dsl`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": env.CORESIGNAL_API_KEY
-        },
-        body: JSON.stringify(requestBody)
+        headers: coresignalHeaders(),
+        body: JSON.stringify(searchBody),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
+      if (!searchResponse.ok) {
+        const errorText = await searchResponse.text();
         throw new Error(
-          `Coresignal API error (${response.status}): ${errorText}`
+          `Coresignal search error (${searchResponse.status}): ${errorText}`
         );
       }
 
-      const data = await response.json();
+      const ids = (await searchResponse.json()) as number[];
+
+      if (!Array.isArray(ids) || ids.length === 0) {
+        throw new Error(
+          `No Coresignal results found for LinkedIn URL: ${input.linkedin_url}`
+        );
+      }
+
+      // ── 2. Collect: employee ID → full profile ─────────────────────
+      const employeeId = ids[0];
+
+      logger.info(
+        { employeeId, linkedin_url: input.linkedin_url },
+        "Coresignal people collect"
+      );
+
+      const collectResponse = await fetch(
+        `${CORESIGNAL_BASE_URL}/collect/${employeeId}`,
+        {
+          method: "GET",
+          headers: coresignalHeaders(),
+        }
+      );
+
+      if (!collectResponse.ok) {
+        const errorText = await collectResponse.text();
+        throw new Error(
+          `Coresignal collect error (${collectResponse.status}): ${errorText}`
+        );
+      }
+
+      const profile = await collectResponse.json();
+
+      logger.info(
+        { employeeId, name: profile.full_name },
+        "Coresignal people collect completed"
+      );
 
       return {
-        results: data.hits?.hits || [],
-        total: data.hits?.total?.value || 0,
-        timestamp: new Date().toISOString()
+        data: profile,
+        timestamp: new Date().toISOString(),
       };
-    }
+    },
   };
 }
 
