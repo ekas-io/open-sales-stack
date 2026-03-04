@@ -17,15 +17,13 @@ type Crawl4aiResponse = {
   result?: Crawl4aiResult;
 };
 
-/* ─── Public API ──────────────────────────────────────────────────────── */
+/* ─── Helpers ─────────────────────────────────────────────────────────── */
 
-export async function crawl4aiExtract(input: ExtractInput): Promise<ExtractOutput> {
-  const baseUrl = env.CRAWL4AI_BASE_URL;
-
-  // Build the request body for crawl4ai v0.8.0 /crawl endpoint.
-  // v0.8.0 uses a `crawler_config` object with CrawlerRunConfig serialization,
-  // NOT the legacy `extraction_config` format. `urls` must be an array.
-  const requestBody: Record<string, unknown> = {
+function buildRequestBody(
+  input: ExtractInput,
+  inputFormat: "markdown" | "html",
+): Record<string, unknown> {
+  return {
     urls: [input.url],
     crawler_config: {
       type: "CrawlerRunConfig",
@@ -42,53 +40,19 @@ export async function crawl4aiExtract(input: ExtractInput): Promise<ExtractOutpu
             },
             instruction: input.prompt,
             schema: input.schema,
-            input_format: "markdown",
+            input_format: inputFormat,
           },
         },
         ...(input.mode === "crawl" && { max_pages: input.limit }),
       },
     },
   };
+}
 
-  logger.info(
-    { url: input.url, mode: input.mode },
-    "Starting crawl4ai extraction"
-  );
-
-  // v0.8.0 returns results synchronously — no task_id polling needed
-  const crawlResponse = await fetch(`${baseUrl}/crawl`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-  });
-
-  if (!crawlResponse.ok) {
-    const errorText = await crawlResponse.text();
-    throw new Error(
-      `crawl4ai API error (${crawlResponse.status}): ${errorText}`
-    );
-  }
-
-  const crawlData = (await crawlResponse.json()) as Crawl4aiResponse;
-
-  // Handle both single-result and multi-result responses
-  const results =
-    crawlData.results ?? (crawlData.result ? [crawlData.result] : []);
-
-  if (results.length === 0) {
-    throw new Error("crawl4ai returned no results for the given URL");
-  }
-
-  // Check for failures
-  const failed = results.filter((r) => !r.success);
-  if (failed.length > 0 && failed.length === results.length) {
-    throw new Error(
-      `crawl4ai extraction failed: ${failed[0]?.error_message ?? "unknown error"}`
-    );
-  }
-
-  // Parse extracted_content from each result.
-  // extracted_content is a JSON string that typically contains an array.
+function parseResults(
+  results: Crawl4aiResult[],
+  mode: "scrape" | "crawl",
+): unknown {
   const extractedData = results
     .filter((r) => r.success && r.extracted_content)
     .map((r) => {
@@ -113,18 +77,97 @@ export async function crawl4aiExtract(input: ExtractInput): Promise<ExtractOutpu
 
   // For single-page scrape, return the first result directly.
   // For multi-page crawl, return the full array.
-  const data =
-    input.mode === "scrape" && extractedData.length === 1
-      ? extractedData[0]
-      : extractedData;
+  return mode === "scrape" && extractedData.length === 1
+    ? extractedData[0]
+    : extractedData;
+}
+
+/** Returns true if the extraction yielded usable data. */
+function hasData(data: unknown): boolean {
+  if (data == null) return false;
+  if (Array.isArray(data) && data.length === 0) return false;
+  if (typeof data === "object" && Object.keys(data as object).length === 0) return false;
+  return true;
+}
+
+async function callCrawl4ai(
+  input: ExtractInput,
+  inputFormat: "markdown" | "html",
+): Promise<{ data: unknown; results: Crawl4aiResult[] }> {
+  const baseUrl = env.CRAWL4AI_BASE_URL;
+  const requestBody = buildRequestBody(input, inputFormat);
+
+  const crawlResponse = await fetch(`${baseUrl}/crawl`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!crawlResponse.ok) {
+    const errorText = await crawlResponse.text();
+    throw new Error(
+      `crawl4ai API error (${crawlResponse.status}): ${errorText}`
+    );
+  }
+
+  const crawlData = (await crawlResponse.json()) as Crawl4aiResponse;
+
+  const results =
+    crawlData.results ?? (crawlData.result ? [crawlData.result] : []);
+
+  if (results.length === 0) {
+    throw new Error("crawl4ai returned no results for the given URL");
+  }
+
+  const failed = results.filter((r) => !r.success);
+  if (failed.length > 0 && failed.length === results.length) {
+    throw new Error(
+      `crawl4ai extraction failed: ${failed[0]?.error_message ?? "unknown error"}`
+    );
+  }
+
+  return { data: parseResults(results, input.mode), results };
+}
+
+/* ─── Public API ──────────────────────────────────────────────────────── */
+
+export async function crawl4aiExtract(input: ExtractInput): Promise<ExtractOutput> {
+  logger.info(
+    { url: input.url, mode: input.mode },
+    "Starting crawl4ai extraction (markdown)"
+  );
+
+  // Try markdown first — it's cheaper on LLM tokens
+  const markdownResult = await callCrawl4ai(input, "markdown");
+
+  if (hasData(markdownResult.data)) {
+    logger.info(
+      { url: input.url, inputFormat: "markdown" },
+      "crawl4ai extraction completed"
+    );
+    return {
+      data: markdownResult.data,
+      status: "completed",
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // Markdown conversion sometimes produces near-empty output for JS-heavy
+  // SPAs (e.g. Ashby job pages). Fall back to sending raw HTML to the LLM.
+  logger.info(
+    { url: input.url },
+    "Markdown extraction returned empty data, retrying with html input_format"
+  );
+
+  const htmlResult = await callCrawl4ai(input, "html");
 
   logger.info(
-    { url: input.url, resultCount: extractedData.length },
-    "crawl4ai extraction completed"
+    { url: input.url, inputFormat: "html", hasData: hasData(htmlResult.data) },
+    "crawl4ai extraction completed (html fallback)"
   );
 
   return {
-    data,
+    data: htmlResult.data,
     status: "completed",
     timestamp: new Date().toISOString(),
   };
