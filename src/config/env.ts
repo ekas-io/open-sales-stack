@@ -12,6 +12,11 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().optional(),
   CORESIGNAL_API_KEY: z.string().min(1, "CORESIGNAL_API_KEY is required"),
   FIRECRAWL_API_KEY: z.string().min(1, "FIRECRAWL_API_KEY is required"),
+  CHROME_CDP_URL: z
+    .string()
+    .url()
+    .default("http://localhost:9222")
+    .describe("Chrome DevTools Protocol endpoint for Playwright to connect to"),
 });
 
 const parsed = envSchema.safeParse(process.env);

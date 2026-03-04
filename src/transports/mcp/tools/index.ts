@@ -14,7 +14,7 @@ import { tool as getStructuredInfo } from "./get-structured-info";
  * so dispatch never needs a manual if/else chain.
  */
 export const mcpTools: McpToolDefinition[] = [
-  getPeopleDetails,
-  getCompanyDetails,
+  // getPeopleDetails,
+  // getCompanyDetails,
   getStructuredInfo,
 ];

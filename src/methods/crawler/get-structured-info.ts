@@ -145,6 +145,13 @@ function jsonFormat(schema: Record<string, unknown>, prompt: string) {
   return { type: "json" as const, schema, prompt };
 }
 
+/** Remove statusCode and error from metadata — do not expose to callers. */
+function sanitizeMetadata(metadata: unknown): unknown {
+  if (!metadata || typeof metadata !== "object") return metadata;
+  const { statusCode: _sc, error: _err, ...rest } = metadata as Record<string, unknown>;
+  return rest;
+}
+
 /* ─── Scrape (single page, basic first → stealth retry) ───────────────── */
 
 type ScrapeResult = {
@@ -214,7 +221,7 @@ async function executeScrape(
 
     return {
       data: basicResult.data.json,
-      metadata: basicResult.data.metadata,
+      metadata: sanitizeMetadata(basicResult.data.metadata),
       status: "completed",
       timestamp: new Date().toISOString(),
     };
@@ -237,7 +244,7 @@ async function executeScrape(
 
     return {
       data: stealthResult.data.json,
-      metadata: stealthResult.data.metadata,
+      metadata: sanitizeMetadata(stealthResult.data.metadata),
       status: "completed",
       timestamp: new Date().toISOString(),
     };
