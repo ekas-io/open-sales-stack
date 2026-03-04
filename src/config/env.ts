@@ -17,6 +17,14 @@ const envSchema = z.object({
     .url()
     .default("http://localhost:9222")
     .describe("Chrome DevTools Protocol endpoint for Playwright to connect to"),
+  CRAWL4AI_BASE_URL: z
+    .string()
+    .url()
+    .default("http://localhost:11235")
+    .describe("Base URL for the self-hosted crawl4ai Docker service"),
+  OPENAI_API_KEY: z
+    .string()
+    .min(1, "OPENAI_API_KEY is required for crawl4ai LLM extraction"),
 });
 
 const parsed = envSchema.safeParse(process.env);

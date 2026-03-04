@@ -12,7 +12,7 @@ const allMethods = [
   crmHelloMethod,
   getPeopleDetails,
   getCompanyDetails,
-  getStructuredInfo
+  getStructuredInfo,
 ];
 
 export const methodRegistry = new Map<string, RegisteredMethod>(
