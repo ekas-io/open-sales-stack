@@ -43,7 +43,16 @@ function buildRequestBody(
             input_format: inputFormat,
           },
         },
-        ...(input.mode === "crawl" && { max_pages: input.limit }),
+        ...(input.mode === "crawl" && {
+          deep_crawl_strategy: {
+            type: "BFSDeepCrawlStrategy",
+            params: {
+              max_depth: 2,
+              max_pages: input.limit,
+              include_external: false,
+            },
+          },
+        }),
       },
     },
   };
