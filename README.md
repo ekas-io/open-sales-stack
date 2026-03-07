@@ -1,145 +1,138 @@
-# ekas-mcps
+# Open Sales Stack
 
-Node.js boilerplate for a personal sales engine with shared business methods exposed as both REST and MCP endpoints.
+**Open source MCP servers for B2B sales research — built by [Ekas](https://ekas.io)**
 
-## What this includes
+Give Claude the ability to research companies and prospects using public web data.
 
-- TypeScript + Express runtime with secure defaults.
-- Shared method registry so one method implementation can be used by:
-  - REST endpoints (`/api/:domain/:method`)
-  - MCP endpoint (`/mcp`, JSON-RPC)
-- Domain-first structure: `data`, `crawler`, `crm`.
-- API key auth middleware for all REST and MCP requests.
-- Cloud Run deploy script (`npm run deploy`) that:
-  - Reads local `.env`
-  - Syncs secrets to Secret Manager
-  - Deploys latest source to Cloud Run with cost controls (`min instances = 0`)
+> **Platform:** macOS only for now. Windows and Linux support coming soon.
 
-## Project structure
+---
 
-```text
-src/
-  app.ts
-  index.ts
-  config/
-    env.ts
-  lib/
-    http-error.ts
-    logger.ts
-  middleware/
-    api-key-auth.ts
-  methods/
-    create-hello-method.ts
-    index.ts
-    data/hello.ts
-    crawler/hello.ts
-    crm/hello.ts
-    types.ts
-  transports/
-    rest/register-rest-routes.ts
-    mcp/handle-mcp-request.ts
-    mcp/register-mcp-route.ts
-scripts/
-  deploy.sh
-```
+## What's in here
 
-## Quick start
+| MCP Server | Source | What you get |
+|---|---|---|
+| **[website-intel](packages/website-intel/)** | Any website | Product info, pricing, team pages, company details — extracted as structured data |
+| **[techstack-intel](packages/techstack-intel/)** | Company websites | CRM, marketing automation, analytics, chat, support tools — detected from page source |
+| **[social-finder](packages/social-finder/)** | LinkedIn | Profile URL, headline, bio, role history, recent posts |
+| | Twitter / X | Profile URL, bio, follower count, recent activity |
+| | GitHub | Profile URL, public repos, contribution activity |
+| **[hiring-intel](packages/hiring-intel/)** | Company careers pages | Open roles, departments, locations, job descriptions |
+| | Greenhouse | All active listings with role details |
+| | Lever | All active listings with role details |
+| | Ashby | All active listings with role details |
+| | Workday | All active listings with role details |
+| **[review-intel](packages/review-intel/)** | G2 | Star rating, review count, category ranking, pros/cons themes |
+| | Capterra | Star rating, review count, reviewer breakdown |
+| | Glassdoor | Company rating, employee sentiment, CEO approval |
+| **[ad-intel](packages/ad-intel/)** | LinkedIn Ad Library | Active campaigns, ad creatives, targeting signals |
+| | Meta Ad Library | Active campaigns across Facebook and Instagram |
 
-1. Install dependencies:
+Requires an **OpenAI API key** for LLM-based extraction. Beyond that, no additional API keys are needed.
+Each MCP runs locally on your machine. Your IP, your requests — no proxy infrastructure, no rate limiting concerns.
+
+---
+
+## Setup
+
+You'll need two things installed before starting:
+
+- **Python 3.10+** — download from [python.org](https://python.org) or install via `brew install python@3.12`
+- **An OpenAI API key** — get one at [platform.openai.com](https://platform.openai.com)
+
+Then run these commands in your terminal:
 
 ```bash
-npm install
+# 1. Clone the repo
+git clone https://github.com/ekas-io/open-sales-stack.git
+cd open-sales-stack
+
+# 2. Run setup (installs everything you need)
+bash scripts/setup.sh
+
+# 3. Add your OpenAI API key
+nano .env
+# Set OPENAI_API_KEY=sk-...
+
+# 4. Check that everything's working
+bash scripts/verify.sh
+
+# 5. Add all MCPs to Claude
+bash scripts/add-to-claude.sh --all
 ```
 
-2. Configure env:
+That's it. If you only want specific MCPs, pick the ones you need:
 
 ```bash
-cp .env.example .env
+bash scripts/add-to-claude.sh --website-intel --social-finder --hiring-intel
 ```
 
-3. Generate a strong API key and set `API_KEY`:
+### Verify in Claude
 
-```bash
-openssl rand -hex 32
+Once added, ask Claude:
+
+> "What MCP tools do you have access to?"
+
+You should see your installed tools listed.
+
+---
+
+## How the MCPs work together
+
+Each MCP is independent — use one or use all. But they're designed to chain naturally in Claude. Here's what a typical company research flow looks like:
+
+```
+You: "Research Acme Corp for me"
+
+Claude calls: website-intel    → scrapes acmecorp.com, extracts product info, pricing, team
+Claude calls: techstack-intel  → detects they use HubSpot, Drift, Segment
+Claude calls: hiring-intel     → finds 3 open SDR roles on their Greenhouse page
+Claude calls: social-finder    → finds their VP Sales on LinkedIn, pulls bio and recent posts
+Claude calls: review-intel     → pulls G2 rating (4.2/5, 47 reviews), Glassdoor sentiment
+Claude calls: ad-intel         → 12 active LinkedIn ad campaigns, 5 on Meta
+
+Claude: "Here's what I found about Acme Corp..."
 ```
 
-4. Run locally:
+You don't need to orchestrate this. Claude reads the tool descriptions and decides which to call based on your request.
 
-```bash
-npm run dev
-```
+---
 
-## REST usage
+## Skills
 
-All requests need `x-api-key`.
+Skills are instruction files that teach Claude *how* to use research data for sales workflows. Drop them into your Claude project knowledge or reference them in prompts.
 
-List methods:
+| Skill | What it teaches Claude |
+|---|---|
+| [Lead Qualification](skills/lead-qualification.md) | Evaluate whether a company matches your ICP based on research signals |
+| [Prospect Research](skills/prospect-research.md) | Full account + contact level research methodology |
+| [LinkedIn Recon](skills/linkedin-recon.md) | Read a prospect's LinkedIn profile and posts for outreach signals |
+| [Cold Email Personalization](skills/cold-email-personalization.md) | Turn research into personalized outreach copy |
 
-```bash
-curl -s http://localhost:8080/api/methods \
-  -H "x-api-key: <API_KEY>"
-```
+MCPs get the data. Skills tell Claude what to do with it.
 
-Call hello method:
+---
 
-```bash
-curl -s http://localhost:8080/api/data/hello \
-  -X POST \
-  -H "content-type: application/json" \
-  -H "x-api-key: <API_KEY>" \
-  -d '{"name":"Shuvra"}'
-```
+## Each MCP in detail
 
-## MCP usage
+Every package has its own README with tool descriptions, input/output schemas, and usage examples. Browse the [packages/](packages/) directory, or see detailed use cases on our website: **[ekas.io/open-sales-stack](https://ekas.io/open-sales-stack)**
 
-POST JSON-RPC to `/mcp` with `x-api-key`.
+---
 
-List tools:
+## Contributing
 
-```bash
-curl -s http://localhost:8080/mcp \
-  -X POST \
-  -H "content-type: application/json" \
-  -H "x-api-key: <API_KEY>" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-```
+Found a bug? Want to add a new research MCP? PRs welcome. See the [packages/](packages/) directory for the existing pattern.
 
-Call tool:
+---
 
-```bash
-curl -s http://localhost:8080/mcp \
-  -X POST \
-  -H "content-type: application/json" \
-  -H "x-api-key: <API_KEY>" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"data.hello","arguments":{"name":"Shuvra"}}}'
-```
+## Custom sales automation
 
-## Deploy to Cloud Run
+These tools cover common research workflows. If you need AI automation built for your team's specific sales stack — CRM integration, lead routing, qualification scoring, automated outreach — we build that.
 
-1. Fill deploy values in `.env`:
+**[ekas.io](https://ekas.io)** — AI engineering for B2B sales teams.
 
-- `GCP_PROJECT_ID`
-- `CLOUD_RUN_SERVICE`
-- `CLOUD_RUN_REGION`
+---
 
-2. Deploy:
+## License
 
-```bash
-npm run deploy
-```
-
-This script will:
-
-- Enable required GCP APIs.
-- Upsert each secret from local `.env` to Secret Manager.
-- Deploy to Cloud Run with:
-  - `min-instances=0` (no idle instance billing)
-  - bounded `max-instances`
-  - CPU throttling outside request handling
-
-## Security notes
-
-- API key required for all `/api/*` and `/mcp` calls.
-- API key is compared with timing-safe equality.
-- Secrets are injected from Secret Manager at runtime.
-- Set `CLOUD_RUN_ALLOW_UNAUTHENTICATED=false` to require IAM auth at Cloud Run edge.
+MIT

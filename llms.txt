@@ -1,0 +1,31 @@
+# Open Sales Stack
+
+> Open source MCP servers and Claude Skills for B2B sales research.
+> Built by Ekas (https://ekas.io). No paid API keys required for most tools.
+
+## About
+
+Open Sales Stack is a collection of Model Context Protocol (MCP) servers designed for B2B sales professionals who use Claude. Each MCP gives Claude the ability to research companies and prospects using public web data.
+
+Install with: git clone, run setup.sh, run add-to-claude.sh.
+
+## MCP Servers
+
+- [Website Intel](https://ekas.io/open-sales-stack/website-intel): Scrape any website and extract structured data as JSON using a custom schema. Supports JS-heavy SPAs.
+- [Techstack Intel](https://ekas.io/open-sales-stack/techstack-intel): Detect what tools and technologies a company uses by analyzing their website source code.
+- [Social Finder](https://ekas.io/open-sales-stack/social-finder): Find LinkedIn, Twitter, and GitHub profiles for any person or company using Google search.
+- [Hiring Intel](https://ekas.io/open-sales-stack/hiring-intel): Find open roles at a company from their careers page and ATS platforms like Greenhouse and Lever.
+- [Review Intel](https://ekas.io/open-sales-stack/review-intel): Extract ratings, reviews, and sentiment from G2, Capterra, and Glassdoor.
+- [Ad Intel](https://ekas.io/open-sales-stack/ad-intel): Check LinkedIn Ad Library and Meta Ad Library for a company's active ad campaigns.
+
+## Skills
+
+- [Lead Qualification](https://ekas.io/open-sales-stack/skills/lead-qualification): Methodology for evaluating if a company is ICP fit based on research data.
+- [Prospect Research](https://ekas.io/open-sales-stack/skills/prospect-research): Complete account-level and contact-level research methodology.
+- [LinkedIn Recon](https://ekas.io/open-sales-stack/skills/linkedin-recon): How to evaluate a prospect's LinkedIn profile and posts for outreach signals.
+- [Cold Email Personalization](https://ekas.io/open-sales-stack/skills/cold-email-personalization): Turn research data into personalized outreach.
+
+## Source
+
+- GitHub: https://github.com/ekas-io/open-sales-stack
+- Website: https://ekas.io/open-sales-stack

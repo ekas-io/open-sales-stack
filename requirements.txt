@@ -1,0 +1,4 @@
+# Core dependencies for Open Sales Stack MCP servers
+crawl4ai[all]
+mcp[cli]
+python-dotenv
