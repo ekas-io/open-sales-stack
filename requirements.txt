@@ -2,3 +2,8 @@
 crawl4ai[all]
 mcp[cli]
 python-dotenv
+
+# techstack-intel dependencies
+dnspython
+httpx
+tldextract
