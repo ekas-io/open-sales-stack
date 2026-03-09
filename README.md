@@ -17,11 +17,13 @@ Give Claude the ability to research companies and prospects using public web dat
 | **[social-finder](packages/social-finder/)** | LinkedIn | Profile URL, headline, bio, role history, recent posts |
 | | Twitter / X | Profile URL, bio, follower count, recent activity |
 | | GitHub | Profile URL, public repos, contribution activity |
-| **[hiring-intel](packages/hiring-intel/)** | Company careers pages | Open roles, departments, locations, job descriptions |
-| | Greenhouse | All active listings with role details |
-| | Lever | All active listings with role details |
-| | Ashby | All active listings with role details |
-| | Workday | All active listings with role details |
+| **[hiring-intel](packages/hiring-intel/)** | Indeed | Job search across 60+ countries — best reliability, no rate limiting |
+| | LinkedIn | Global job search (rate-limits apply, proxies recommended for volume) |
+| | Glassdoor | Job search for select countries |
+| | Google Jobs | Job search via Google search syntax |
+| | ZipRecruiter | US & Canada job search |
+| | Bayt | International job search |
+| | Any careers page | Full job description extraction via crawl4ai (Greenhouse, Lever, Ashby, Workday, etc.) |
 | **[review-intel](packages/review-intel/)** | G2 | Star rating, review count, category ranking, pros/cons themes |
 | | Capterra | Star rating, review count, reviewer breakdown |
 | | Glassdoor | Company rating, employee sentiment, CEO approval |
