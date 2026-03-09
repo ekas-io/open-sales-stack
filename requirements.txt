@@ -10,3 +10,6 @@ tldextract
 
 # social-intel dependencies
 linkedin-scraper>=3.0
+
+# hiring-intel dependencies
+python-jobspy
