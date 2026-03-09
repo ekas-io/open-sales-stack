@@ -68,7 +68,7 @@ Claude uses mode: "crawl", limit: 5
 
 - macOS (Windows/Linux support planned)
 - Node.js 20+
-- Python 3.10+ (for crawl4ai)
+- Python 3.10+
 
 ### Install via Open Sales Stack (recommended)
 
@@ -85,10 +85,10 @@ Configured in the root `.env` (shared by all MCPs). You can also create a `packa
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes | Used by crawl4ai for LLM-based data extraction |
+| `OPENAI_API_KEY` | Yes | Used for LLM-based data extraction |
 | `CRAWL4AI_BASE_URL` | No | Defaults to `http://localhost:11235` |
 
-### Start the crawl4ai server
+### Start the extraction server
 
 From the repo root:
 
@@ -125,8 +125,8 @@ claude mcp add oss-website-intel \
 
 1. You ask Claude to extract data from a URL
 2. Claude calls the `crawler_get_structured_info` tool
-3. The tool sends the URL to your local crawl4ai server
-4. crawl4ai renders the page (full JavaScript execution), then uses GPT-4o-mini to extract data matching your schema
+3. The tool sends the URL to the local extraction server
+4. The server renders the page (full JavaScript execution), then uses an LLM to extract data matching your schema
 5. Structured JSON is returned to Claude
 
 All processing happens locally on your machine. The only external API call is to OpenAI for the LLM extraction step.

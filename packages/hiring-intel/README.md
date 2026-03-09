@@ -6,7 +6,7 @@ Search job postings across major job boards and extract job descriptions from ca
 
 ### `search_jobs`
 
-Search for job postings across 6 job boards using [JobSpy](https://github.com/speedyapply/JobSpy).
+Search for job postings across 6 job boards.
 
 **Supported job boards:**
 
@@ -77,7 +77,7 @@ Set these in your root `.env` file if needed:
 
 | Variable | Required | Description |
 |---|---|---|
-| `JOBSPY_PROXIES` | No | Comma-separated list of proxy addresses for JobSpy. Format: `user:pass@host:port` or `host:port`. Proxies are rotated round-robin. |
+| `JOBSPY_PROXIES` | No | Comma-separated list of proxy addresses for job scraping. Format: `user:pass@host:port` or `host:port`. Proxies are rotated round-robin. |
 | `JOBSPY_CA_CERT` | No | Path to a CA certificate file for proxy SSL connections. Only needed if your proxy uses a custom certificate authority. |
 
 ### When do you need proxies?

@@ -2,7 +2,7 @@
 
 **Part of [Open Sales Stack](https://github.com/ekas-io/open-sales-stack) by [Ekas](https://ekas.io)**
 
-MCP server that scrapes LinkedIn profiles, companies, and company posts using [linkedin_scraper](https://github.com/joeyism/linkedin_scraper) v3.0+.
+MCP server that scrapes LinkedIn profiles, companies, and company posts.
 
 ---
 
@@ -88,15 +88,7 @@ After the first login (either method), the session is saved to `packages/social-
 
 ### Dependencies
 
-Dependencies are **auto-installed** on first run. The server checks for `linkedin-scraper>=3.0` and `playwright` chromium browser, installing them if missing.
-
-You can also install manually:
-
-```bash
-# From the repo root (with venv active):
-pip install linkedin-scraper>=3.0
-python -m playwright install chromium
-```
+Dependencies are **auto-installed** on first run. The server checks for required packages and the Chromium browser, installing them if missing.
 
 ### Add to Claude
 
@@ -121,7 +113,7 @@ Configured in the root `.env` or `packages/social-intel/.env`.
 1. You ask Claude to research a person or company on LinkedIn
 2. Claude calls one of the social-intel tools with the LinkedIn URL
 3. The server authenticates with LinkedIn (session reuse, programmatic login, or manual login)
-4. [linkedin_scraper](https://github.com/joeyism/linkedin_scraper) uses Playwright to load the page and extract structured data
+4. A headless browser loads the page and extracts structured data
 5. JSON results are returned to Claude
 
 All processing happens locally on your machine. No external APIs are called.
