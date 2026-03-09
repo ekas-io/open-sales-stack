@@ -23,7 +23,7 @@ Give Claude the ability to research companies and prospects using public web dat
 | | Google Jobs | Job search via Google search syntax |
 | | ZipRecruiter | US & Canada job search |
 | | Bayt | International job search |
-| | Any careers page | Full job description extraction via crawl4ai (Greenhouse, Lever, Ashby, Workday, etc.) |
+| | Any careers page | Full job description extraction (Greenhouse, Lever, Ashby, Workday, etc.) |
 | **[review-intel](packages/review-intel/)** | G2 | Star rating, review count, category ranking, pros/cons themes |
 | | Capterra | Star rating, review count, reviewer breakdown |
 | | Glassdoor | Company rating, employee sentiment, CEO approval |
