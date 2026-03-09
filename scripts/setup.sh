@@ -87,10 +87,27 @@ echo ""
 echo -e "${BOLD}Setting up environment:${NC}"
 
 if [ -f "$PROJECT_ROOT/.env" ]; then
-  echo -e "  .env already exists, skipping"
+  echo -e "  .env already exists, skipping copy"
 else
   cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
   echo -e "  ${GREEN}.env created from .env.example${NC}"
+fi
+
+# Check if OPENAI_API_KEY is already set to a real value
+CURRENT_KEY=$(grep -E '^OPENAI_API_KEY=' "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2-)
+if [ -z "$CURRENT_KEY" ] || [ "$CURRENT_KEY" = "your-openai-api-key" ]; then
+  echo ""
+  echo -e "  ${YELLOW}OpenAI API key is required for LLM-based extraction.${NC}"
+  echo -ne "  Enter your OpenAI API key (or press Enter to skip): "
+  read -r OPENAI_KEY
+  if [ -n "$OPENAI_KEY" ]; then
+    sed -i '' "s|^OPENAI_API_KEY=.*|OPENAI_API_KEY=${OPENAI_KEY}|" "$PROJECT_ROOT/.env"
+    echo -e "  ${GREEN}✅ OpenAI API key saved to .env${NC}"
+  else
+    echo -e "  ${YELLOW}⚠  Skipped. Set OPENAI_API_KEY in .env before using the tools.${NC}"
+  fi
+else
+  echo -e "  ✅ OpenAI API key already configured"
 fi
 
 echo ""
@@ -101,14 +118,10 @@ echo -e "${BOLD}${GREEN}✅ Setup complete!${NC}"
 echo ""
 echo -e "${BOLD}Next steps:${NC}"
 echo ""
-echo -e "  1. ${YELLOW}Add your OpenAI API key${NC} to the root .env:"
-echo ""
-echo -e "     ${BLUE}.env${NC}  →  set ${BOLD}OPENAI_API_KEY${NC}"
-echo ""
-echo -e "  2. ${YELLOW}Verify your setup:${NC}"
+echo -e "  1. ${YELLOW}Verify your setup:${NC}"
 echo -e "     bash scripts/verify.sh"
 echo ""
-echo -e "  3. ${YELLOW}Add MCPs to Claude:${NC}"
+echo -e "  2. ${YELLOW}Add MCPs to Claude:${NC}"
 echo -e "     bash scripts/add-to-claude.sh --all"
 echo -e "     bash scripts/add-to-claude.sh --website-intel --techstack-intel"
 echo ""
