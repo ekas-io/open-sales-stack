@@ -13,7 +13,7 @@ Install with: git clone, run setup.sh, run add-to-claude.sh.
 
 - [Website Intel](https://ekas.io/open-sales-stack/website-intel): Scrape any website and extract structured data as JSON using a custom schema. Supports JS-heavy SPAs.
 - [Techstack Intel](https://ekas.io/open-sales-stack/techstack-intel): Detect what tools and technologies a company uses by analyzing their website source code.
-- [Social Finder](https://ekas.io/open-sales-stack/social-finder): Find LinkedIn, Twitter, and GitHub profiles for any person or company using Google search.
+- [Social Intel](https://ekas.io/open-sales-stack/social-intel): Scrape LinkedIn profiles, companies, and company posts for structured sales intelligence.
 - [Hiring Intel](https://ekas.io/open-sales-stack/hiring-intel): Find open roles at a company from their careers page and ATS platforms like Greenhouse and Lever.
 - [Review Intel](https://ekas.io/open-sales-stack/review-intel): Extract ratings, reviews, and sentiment from G2, Capterra, and Glassdoor.
 - [Ad Intel](https://ekas.io/open-sales-stack/ad-intel): Check LinkedIn Ad Library and Meta Ad Library for a company's active ad campaigns.

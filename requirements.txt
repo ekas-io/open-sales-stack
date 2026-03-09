@@ -7,3 +7,6 @@ python-dotenv
 dnspython
 httpx
 tldextract
+
+# social-intel dependencies
+linkedin-scraper>=3.0
