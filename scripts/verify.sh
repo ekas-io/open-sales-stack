@@ -32,7 +32,7 @@ fi
 PACKAGES=(
   "website-intel|OPENAI_API_KEY|"
   "techstack-intel||"
-  "social-finder||"
+  "social-intel||LINKEDIN_EMAIL,LINKEDIN_PASSWORD"
   "hiring-intel||"
   "review-intel||"
   "ad-intel||"
@@ -146,6 +146,70 @@ if "$VENV_PYTHON" -c "import mcp" &>/dev/null 2>&1; then
 else
   echo -e "  ❌ mcp SDK ${RED}not installed${NC}"
   echo -e "     Run: ${BLUE}bash scripts/setup.sh${NC}"
+fi
+
+if "$VENV_PYTHON" -c "import linkedin_scraper" &>/dev/null 2>&1; then
+  echo -e "  ✅ linkedin-scraper ${GREEN}installed${NC}"
+else
+  echo -e "  ❌ linkedin-scraper ${RED}not installed${NC}"
+  echo -e "     Run: ${BLUE}bash scripts/setup.sh${NC}"
+fi
+
+echo ""
+
+# ── LinkedIn credentials check ───────────────────────────────────────
+
+echo -e "${BOLD}LinkedIn (social-intel):${NC}"
+
+SOCIAL_INTEL_DIR="$PROJECT_ROOT/packages/social-intel"
+SESSION_FILE="$SOCIAL_INTEL_DIR/linkedin_session.json"
+
+# Check if credentials are configured (package .env first, then root .env)
+LI_EMAIL=""
+LI_PASS=""
+for env_file in "$SOCIAL_INTEL_DIR/.env" "$PROJECT_ROOT/.env"; do
+  [ -f "$env_file" ] || continue
+  if [ -z "$LI_EMAIL" ]; then
+    LI_EMAIL=$(grep "^LINKEDIN_EMAIL=" "$env_file" 2>/dev/null | cut -d'=' -f2- | xargs)
+  fi
+  if [ -z "$LI_PASS" ]; then
+    LI_PASS=$(grep "^LINKEDIN_PASSWORD=" "$env_file" 2>/dev/null | cut -d'=' -f2- | xargs)
+  fi
+done
+
+HAS_CREDS=false
+if [ -n "$LI_EMAIL" ] && [ -n "$LI_PASS" ]; then
+  HAS_CREDS=true
+fi
+
+HAS_SESSION=false
+if [ -f "$SESSION_FILE" ]; then
+  HAS_SESSION=true
+fi
+
+if [ "$HAS_CREDS" = true ]; then
+  echo -e "  Credentials found for ${BLUE}${LI_EMAIL}${NC}"
+  echo -e "  Verifying login (this may take a moment)..."
+
+  "$VENV_PYTHON" "$PROJECT_ROOT/scripts/verify_linkedin.py" 2>/dev/null
+  LI_EXIT=$?
+
+  if [ "$LI_EXIT" -eq 0 ]; then
+    echo -e "  ✅ LinkedIn login ${GREEN}verified${NC} — session saved"
+  else
+    echo -e "  ❌ LinkedIn login ${RED}failed${NC} — check your credentials"
+    echo -e "     Update in: ${BLUE}packages/social-intel/.env${NC}"
+    echo -e "     Or re-run: ${BLUE}bash scripts/setup.sh${NC}"
+  fi
+elif [ "$HAS_SESSION" = true ]; then
+  echo -e "  ✅ Saved session found ${GREEN}(linkedin_session.json)${NC}"
+  echo -e "     ${DIM}Session may expire — delete the file to re-authenticate${NC}"
+else
+  echo -e "  ⚠️  ${YELLOW}LinkedIn not configured${NC}"
+  echo -e "     Company scraping works without login."
+  echo -e "     Profile scraping and posts require authentication."
+  echo -e "     Run ${BLUE}bash scripts/setup.sh${NC} to configure, or set credentials in:"
+  echo -e "     ${BLUE}packages/social-intel/.env${NC}  →  ${BOLD}LINKEDIN_EMAIL${NC} + ${BOLD}LINKEDIN_PASSWORD${NC}"
 fi
 
 echo ""

@@ -14,9 +14,9 @@ Give Claude the ability to research companies and prospects using public web dat
 |---|---|---|
 | **[website-intel](packages/website-intel/)** | Any website | Product info, pricing, team pages, company details — extracted as structured data |
 | **[techstack-intel](packages/techstack-intel/)** | Company websites | CRM, marketing automation, analytics, chat, support tools — detected from page source |
-| **[social-finder](packages/social-finder/)** | LinkedIn | Profile URL, headline, bio, role history, recent posts |
-| | Twitter / X | Profile URL, bio, follower count, recent activity |
-| | GitHub | Profile URL, public repos, contribution activity |
+| **[social-intel](packages/social-intel/)** | LinkedIn — Profile scrape | Name, headline, location, about, work experiences, education, skills |
+| | LinkedIn — Company scrape | Company name, industry, size, headquarters, founded year, specialties, overview |
+| | LinkedIn — Company posts | Recent posts with text, reaction counts, comment counts, repost counts, dates |
 | **[hiring-intel](packages/hiring-intel/)** | Indeed | Job search across 60+ countries — best reliability, no rate limiting |
 | | LinkedIn | Global job search (rate-limits apply, proxies recommended for volume) |
 | | Glassdoor | Job search for select countries |
@@ -63,10 +63,18 @@ bash scripts/verify.sh
 bash scripts/add-to-claude.sh --all
 ```
 
+During setup, you'll be asked how you'd like to authenticate with LinkedIn (for social-intel):
+
+1. **Skip** (default) — configure later; company scraping works without login
+2. **Browser login** — a browser window opens, you log in manually
+3. **Credentials** — provide your email + password, saved locally for headless login
+
+See the [social-intel README](packages/social-intel/) for more details.
+
 That's it. If you only want specific MCPs, pick the ones you need:
 
 ```bash
-bash scripts/add-to-claude.sh --website-intel --social-finder --hiring-intel
+bash scripts/add-to-claude.sh --website-intel --social-intel --hiring-intel
 ```
 
 ### Verify in Claude
@@ -89,7 +97,7 @@ You: "Research Acme Corp for me"
 Claude calls: website-intel    → scrapes acmecorp.com, extracts product info, pricing, team
 Claude calls: techstack-intel  → detects they use HubSpot, Drift, Segment
 Claude calls: hiring-intel     → finds 3 open SDR roles on their Greenhouse page
-Claude calls: social-finder    → finds their VP Sales on LinkedIn, pulls bio and recent posts
+Claude calls: social-intel     → scrapes their VP Sales LinkedIn profile, pulls bio, experience, and recent posts
 Claude calls: review-intel     → pulls G2 rating (4.2/5, 47 reviews), Glassdoor sentiment
 Claude calls: ad-intel         → 12 active LinkedIn ad campaigns, 5 on Meta
 

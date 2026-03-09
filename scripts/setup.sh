@@ -7,6 +7,7 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 BOLD='\033[1m'
+DIM='\033[2m'
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -59,7 +60,7 @@ echo ""
 
 VENV_DIR="$PROJECT_ROOT/.venv"
 
-if [ -d "$VENV_DIR" ] && "$VENV_DIR/bin/python" -c "import crawl4ai; import mcp" &>/dev/null 2>&1; then
+if [ -d "$VENV_DIR" ] && "$VENV_DIR/bin/python" -c "import crawl4ai; import mcp; import linkedin_scraper" &>/dev/null 2>&1; then
   echo -e "${BOLD}Dependencies:${NC}"
   echo -e "  ✅ All Python packages already installed in .venv"
 else
@@ -87,11 +88,108 @@ echo ""
 echo -e "${BOLD}Setting up environment:${NC}"
 
 if [ -f "$PROJECT_ROOT/.env" ]; then
-  echo -e "  .env already exists, skipping"
+  echo -e "  .env already exists, skipping copy"
 else
   cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
   echo -e "  ${GREEN}.env created from .env.example${NC}"
 fi
+
+# Check if OPENAI_API_KEY is already set to a real value
+CURRENT_KEY=$(grep -E '^OPENAI_API_KEY=' "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2-)
+if [ -z "$CURRENT_KEY" ] || [ "$CURRENT_KEY" = "your-openai-api-key" ]; then
+  echo ""
+  echo -e "  ${YELLOW}OpenAI API key is required for LLM-based extraction.${NC}"
+  echo -ne "  Enter your OpenAI API key (or press Enter to skip): "
+  read -r OPENAI_KEY
+  if [ -n "$OPENAI_KEY" ]; then
+    sed -i '' "s|^OPENAI_API_KEY=.*|OPENAI_API_KEY=${OPENAI_KEY}|" "$PROJECT_ROOT/.env"
+    echo -e "  ${GREEN}✅ OpenAI API key saved to .env${NC}"
+  else
+    echo -e "  ${YELLOW}⚠  Skipped. Set OPENAI_API_KEY in .env before using the tools.${NC}"
+  fi
+else
+  echo -e "  ✅ OpenAI API key already configured"
+fi
+
+echo ""
+
+# ── LinkedIn setup (social-intel) ─────────────────────────────────────
+
+SOCIAL_INTEL_ENV="$PROJECT_ROOT/packages/social-intel/.env"
+
+echo -e "${BOLD}LinkedIn setup (social-intel):${NC}"
+echo ""
+echo -e "  social-intel scrapes LinkedIn profiles, companies, and posts."
+echo -e "  A LinkedIn account is required. Choose how to authenticate:"
+echo ""
+echo -e "  ${BOLD}1)${NC} Skip           — I don't need LinkedIn scraping right now"
+echo -e "  ${BOLD}2)${NC} Browser login  — opens a browser window, you log in manually"
+echo -e "  ${BOLD}3)${NC} Credentials    — provide your LinkedIn email + password now (saved locally)"
+echo ""
+
+read -rp "  Choose [1/2/3] (default: 1): " linkedin_choice
+linkedin_choice="${linkedin_choice:-1}"
+
+case "$linkedin_choice" in
+  2)
+    echo ""
+    echo -e "  Opening a browser window — please log into LinkedIn..."
+    echo -e "  ${DIM}(You have up to 5 minutes to complete the login)${NC}"
+    echo ""
+    "$VENV_DIR/bin/python" "$PROJECT_ROOT/scripts/login_linkedin.py" 2>/dev/null
+    LI_EXIT=$?
+    if [ "$LI_EXIT" -eq 0 ]; then
+      echo -e "  ${GREEN}✅ LinkedIn login successful — session saved${NC}"
+    else
+      echo -e "  ${YELLOW}⚠️  Login was not completed. You can retry later or choose option 3 (credentials).${NC}"
+      echo -e "     Re-run: ${BLUE}bash scripts/setup.sh${NC}"
+    fi
+    ;;
+  3)
+    echo ""
+    read -rp "  LinkedIn email: " li_email
+    echo -n "  LinkedIn password: "
+    li_password=""
+    while IFS= read -r -s -n1 char; do
+      if [[ -z "$char" ]]; then
+        break
+      elif [[ "$char" == $'\x7f' ]] || [[ "$char" == $'\b' ]]; then
+        if [[ -n "$li_password" ]]; then
+          li_password="${li_password%?}"
+          echo -ne '\b \b'
+        fi
+      else
+        li_password+="$char"
+        echo -n '*'
+      fi
+    done
+    echo ""
+
+    if [ -n "$li_email" ] && [ -n "$li_password" ]; then
+      # Save to package-level .env
+      cat > "$SOCIAL_INTEL_ENV" << LIENV
+# LinkedIn credentials for social-intel (programmatic login)
+LINKEDIN_EMAIL=${li_email}
+LINKEDIN_PASSWORD=${li_password}
+LIENV
+      echo -e "  ${GREEN}✅ LinkedIn credentials saved to packages/social-intel/.env${NC}"
+      echo ""
+      echo -e "  Verifying login..."
+      "$VENV_DIR/bin/python" "$PROJECT_ROOT/scripts/verify_linkedin.py" 2>/dev/null
+      LI_EXIT=$?
+      if [ "$LI_EXIT" -eq 0 ]; then
+        echo -e "  ${GREEN}✅ LinkedIn login verified — session saved${NC}"
+      else
+        echo -e "  ${YELLOW}⚠️  Login could not be verified now. You can retry with: bash scripts/verify.sh${NC}"
+      fi
+    else
+      echo -e "  ${YELLOW}Empty email or password — skipping. You can add them later.${NC}"
+    fi
+    ;;
+  *)
+    echo -e "  Skipped LinkedIn setup. You can configure it later by re-running setup."
+    ;;
+esac
 
 echo ""
 
@@ -101,14 +199,10 @@ echo -e "${BOLD}${GREEN}✅ Setup complete!${NC}"
 echo ""
 echo -e "${BOLD}Next steps:${NC}"
 echo ""
-echo -e "  1. ${YELLOW}Add your OpenAI API key${NC} to the root .env:"
-echo ""
-echo -e "     ${BLUE}.env${NC}  →  set ${BOLD}OPENAI_API_KEY${NC}"
-echo ""
-echo -e "  2. ${YELLOW}Verify your setup:${NC}"
+echo -e "  1. ${YELLOW}Verify your setup:${NC}"
 echo -e "     bash scripts/verify.sh"
 echo ""
-echo -e "  3. ${YELLOW}Add MCPs to Claude:${NC}"
+echo -e "  2. ${YELLOW}Add MCPs to Claude:${NC}"
 echo -e "     bash scripts/add-to-claude.sh --all"
 echo -e "     bash scripts/add-to-claude.sh --website-intel --techstack-intel"
 echo ""
