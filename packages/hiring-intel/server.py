@@ -97,8 +97,11 @@ def _run_jobspy_search(
         "verbose": 0,
     }
 
+    # Always specify site_name to avoid broken scrapers (e.g. BDJobs, Naukri)
     if site_name:
         kwargs["site_name"] = site_name
+    else:
+        kwargs["site_name"] = ["indeed", "linkedin", "glassdoor", "google", "zip_recruiter"]
     if location:
         kwargs["location"] = location
     if distance is not None:
