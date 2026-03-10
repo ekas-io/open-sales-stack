@@ -97,7 +97,6 @@ def _run_jobspy_search(
         "verbose": 0,
     }
 
-    # Always specify site_name to avoid broken scrapers (e.g. BDJobs, Naukri)
     if site_name:
         kwargs["site_name"] = site_name
     else:
