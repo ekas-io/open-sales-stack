@@ -85,38 +85,23 @@ Configured in the root `.env` (shared by all MCPs). You can also create a `packa
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes | Used for LLM-based data extraction |
-| `CRAWL4AI_BASE_URL` | No | Defaults to `http://localhost:11235` |
-
-### Start the extraction server
-
-From the repo root:
-
-```bash
-npm run crawl4ai:start
-```
-
-Verify it's running:
-
-```bash
-curl http://localhost:11235/health
-```
+| `OPENAI_API_KEY` | Yes | API key for LLM-based data extraction |
+| `LLM_PROVIDER` | No | Defaults to `openai/gpt-5-mini-2025-08-07` |
 
 ### Add to Claude
 
 ```bash
 # From the repo root:
-npm run add-to-claude -- --website-intel
+bash scripts/add-to-claude.sh --website-intel
 ```
 
-Or manually for Claude Code:
+Or manually:
 
 ```bash
 claude mcp add oss-website-intel \
   -s user \
-  -e OPENAI_API_KEY=sk-your-key \
-  -e CRAWL4AI_BASE_URL=http://localhost:11235 \
-  -- tsx /path/to/open-sales-stack/packages/website-intel/src/index.ts
+  -e OPENAI_API_KEY=your-api-key \
+  -- .venv/bin/python packages/website-intel/server.py
 ```
 
 ---

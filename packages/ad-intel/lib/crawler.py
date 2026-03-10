@@ -40,11 +40,11 @@ def _build_run_config(
     delay_before_return_html: int = 5,
 ) -> CrawlerRunConfig:
     """Build a CrawlerRunConfig with LLM extraction strategy."""
-    openai_api_key = os.environ.get("OPENAI_API_KEY", "")
-    llm_provider = os.environ.get("LLM_PROVIDER", "openai/gpt-4o-mini")
+    llm_api_key = os.environ.get("OPENAI_API_KEY", "")
+    llm_provider = os.environ.get("LLM_PROVIDER", "openai/gpt-5-mini-2025-08-07")
 
     extraction = LLMExtractionStrategy(
-        llm_config=LLMConfig(provider=llm_provider, api_token=openai_api_key),
+        llm_config=LLMConfig(provider=llm_provider, api_token=llm_api_key),
         instruction=prompt,
         schema=schema,
         input_format=input_format,

@@ -39,15 +39,14 @@ Search the LinkedIn Ad Library for ads by account owner, payer, or keyword.
 ## Prerequisites
 
 - Python 3.11+
-- `crawl4ai[all]` pip package (installed automatically via dependencies)
-- OpenAI API key for LLM extraction
+- Dependencies installed via `pip install -r requirements.txt`
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LLM_PROVIDER` | `openai/gpt-4o-mini` | LLM provider for extraction |
-| `OPENAI_API_KEY` | — | Required for LLM extraction |
+| `OPENAI_API_KEY` | — | Required. API key for the LLM provider |
+| `LLM_PROVIDER` | `openai/gpt-5-mini-2025-08-07` | LLM provider for extraction |
 
 ## Running
 

@@ -34,6 +34,8 @@ if not OPENAI_API_KEY or OPENAI_API_KEY.startswith("your-"):
     print("Error: OPENAI_API_KEY is required. Set it in .env", file=sys.stderr)
     sys.exit(1)
 
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai/gpt-5-mini-2025-08-07")
+
 # ── Logging ──────────────────────────────────────────────────────────────
 
 logging.basicConfig(
@@ -70,7 +72,7 @@ def _build_run_config(
 ) -> CrawlerRunConfig:
     """Build a CrawlerRunConfig with LLM extraction strategy."""
     extraction = LLMExtractionStrategy(
-        provider="openai/gpt-4o-mini",
+        provider=LLM_PROVIDER,
         api_token=OPENAI_API_KEY,
         instruction=prompt,
         schema=schema,
