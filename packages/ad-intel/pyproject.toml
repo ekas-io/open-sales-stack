@@ -1,0 +1,20 @@
+[project]
+name = "ad-intel-mcp"
+version = "0.1.0"
+description = "MCP server for competitive ad intelligence from Meta and LinkedIn Ad Libraries"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]",
+    "crawl4ai[all]",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
