@@ -38,19 +38,14 @@ Search the LinkedIn Ad Library for ads by account owner, payer, or keyword.
 
 ## Prerequisites
 
-- Running crawl4ai instance (default: `http://localhost:11235`)
+- Python 3.11+
+- `crawl4ai[all]` pip package (installed automatically via dependencies)
 - OpenAI API key for LLM extraction
-
-```bash
-# Start crawl4ai
-docker run -p 11235:11235 unclecode/crawl4ai
-```
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CRAWL4AI_BASE_URL` | `http://localhost:11235` | crawl4ai service URL |
 | `LLM_PROVIDER` | `openai/gpt-4o-mini` | LLM provider for extraction |
 | `OPENAI_API_KEY` | — | Required for LLM extraction |
 
@@ -67,7 +62,6 @@ claude mcp add oss-ad-intel -- python packages/ad-intel/server.py
 ## Testing
 
 ```bash
-# Ensure crawl4ai is running first
 pytest packages/ad-intel/tests/ -v -s
 
 # Meta tests only

@@ -1,7 +1,7 @@
 """
 End-to-end tests for LinkedIn Ad Library tool.
 
-Requires: running crawl4ai instance at CRAWL4AI_BASE_URL (default localhost:11235)
+Requires: OPENAI_API_KEY set for LLM extraction.
 
 NOTE: LinkedIn Ad Library may require authentication for full results.
 Some tests may return 0 results due to LinkedIn's access restrictions.

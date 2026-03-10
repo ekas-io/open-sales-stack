@@ -1,7 +1,7 @@
 """
 End-to-end tests for Meta Ad Library tool.
 
-Requires: running crawl4ai instance at CRAWL4AI_BASE_URL (default localhost:11235)
+Requires: OPENAI_API_KEY set for LLM extraction.
 Run with: pytest packages/ad-intel/tests/test_meta_ads.py -v -s
 """
 
