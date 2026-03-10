@@ -96,19 +96,19 @@ fi
 
 # Check if OPENAI_API_KEY is already set to a real value
 CURRENT_KEY=$(grep -E '^OPENAI_API_KEY=' "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2-)
-if [ -z "$CURRENT_KEY" ] || [ "$CURRENT_KEY" = "your-openai-api-key" ]; then
+if [ -z "$CURRENT_KEY" ] || [ "$CURRENT_KEY" = "your-api-key" ]; then
   echo ""
-  echo -e "  ${YELLOW}OpenAI API key is required for LLM-based extraction.${NC}"
+  echo -e "  ${YELLOW}An OpenAI API key is required for LLM-based extraction.${NC}"
   echo -ne "  Enter your OpenAI API key (or press Enter to skip): "
-  read -r OPENAI_KEY
-  if [ -n "$OPENAI_KEY" ]; then
-    sed -i '' "s|^OPENAI_API_KEY=.*|OPENAI_API_KEY=${OPENAI_KEY}|" "$PROJECT_ROOT/.env"
-    echo -e "  ${GREEN}✅ OpenAI API key saved to .env${NC}"
+  read -r API_KEY
+  if [ -n "$API_KEY" ]; then
+    sed -i '' "s|^OPENAI_API_KEY=.*|OPENAI_API_KEY=${API_KEY}|" "$PROJECT_ROOT/.env"
+    echo -e "  ${GREEN}✅ API key saved to .env${NC}"
   else
     echo -e "  ${YELLOW}⚠  Skipped. Set OPENAI_API_KEY in .env before using the tools.${NC}"
   fi
 else
-  echo -e "  ✅ OpenAI API key already configured"
+  echo -e "  ✅ API key already configured"
 fi
 
 echo ""

@@ -13,3 +13,6 @@ linkedin-scraper>=3.0
 
 # hiring-intel dependencies
 python-jobspy
+
+# ad-intel dependencies (httpx already listed above)
+pytest-asyncio
