@@ -6,6 +6,8 @@ Run directly: python packages/website-intel/server.py
 """
 
 import asyncio
+import contextlib
+import io
 import json
 import logging
 import os
@@ -16,7 +18,7 @@ from typing import Any
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
-from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
+from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, LLMConfig
 from crawl4ai.extraction_strategy import LLMExtractionStrategy
 from crawl4ai.deep_crawling import BFSDeepCrawlStrategy
 
@@ -29,9 +31,11 @@ _root_dir = os.path.dirname(os.path.dirname(_pkg_dir))
 load_dotenv(os.path.join(_pkg_dir, ".env"))
 load_dotenv(os.path.join(_root_dir, ".env"))
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-if not OPENAI_API_KEY or OPENAI_API_KEY.startswith("your-"):
-    print("Error: OPENAI_API_KEY is required. Set it in .env", file=sys.stderr)
+LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai/gpt-4o-mini")
+
+if not LLM_API_KEY or LLM_API_KEY.startswith("your-"):
+    print("Error: LLM_API_KEY is required. Run bash scripts/setup.sh or set it in .env", file=sys.stderr)
     sys.exit(1)
 
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai/gpt-5-mini-2025-08-07")
@@ -50,13 +54,25 @@ logger = logging.getLogger("website-intel")
 _crawler: AsyncWebCrawler | None = None
 
 
+@contextlib.contextmanager
+def _suppress_stdout():
+    """Redirect stdout to stderr so crawl4ai prints don't break MCP JSON-RPC."""
+    old_stdout = sys.stdout
+    sys.stdout = sys.stderr
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
+
+
 async def get_crawler() -> AsyncWebCrawler:
     """Lazily initialize a shared browser instance."""
     global _crawler
     if _crawler is None:
-        browser_config = BrowserConfig(headless=True)
+        browser_config = BrowserConfig(headless=True, verbose=False)
         _crawler = AsyncWebCrawler(config=browser_config)
-        await _crawler.__aenter__()
+        with _suppress_stdout():
+            await _crawler.__aenter__()
     return _crawler
 
 
@@ -72,14 +88,16 @@ def _build_run_config(
 ) -> CrawlerRunConfig:
     """Build a CrawlerRunConfig with LLM extraction strategy."""
     extraction = LLMExtractionStrategy(
-        provider=LLM_PROVIDER,
-        api_token=OPENAI_API_KEY,
+        llm_config=LLMConfig(
+            provider=LLM_PROVIDER,
+            api_token=LLM_API_KEY,
+        ),
         instruction=prompt,
         schema=schema,
         input_format=input_format,
     )
 
-    kwargs: dict[str, Any] = {"extraction_strategy": extraction}
+    kwargs: dict[str, Any] = {"extraction_strategy": extraction, "verbose": False}
 
     if mode == "crawl":
         kwargs["deep_crawl_strategy"] = BFSDeepCrawlStrategy(
@@ -136,7 +154,8 @@ async def _run_extraction(
     """Run crawl4ai extraction with given input format."""
     config = _build_run_config(prompt, schema, mode, limit, input_format)
     crawler = await get_crawler()
-    result = await crawler.arun(url=url, config=config)
+    with _suppress_stdout():
+        result = await crawler.arun(url=url, config=config)
 
     # Deep crawl returns a list
     results = result if isinstance(result, list) else [result]
@@ -264,7 +283,7 @@ Example \u2014 extract team/contact info:
 
 
 @mcp.tool(description=TOOL_DESCRIPTION)
-async def crawler_get_structured_info(
+async def website_intel_extract(
     url: str,
     schema: dict,
     prompt: str,

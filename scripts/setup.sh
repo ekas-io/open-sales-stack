@@ -87,11 +87,11 @@ echo ""
 
 echo -e "${BOLD}Setting up environment:${NC}"
 
-if [ -f "$PROJECT_ROOT/.env" ]; then
-  echo -e "  .env already exists, skipping copy"
-else
+if [ ! -f "$PROJECT_ROOT/.env" ]; then
   cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
   echo -e "  ${GREEN}.env created from .env.example${NC}"
+else
+  echo -e "  .env already exists"
 fi
 
 # Check if OPENAI_API_KEY is already set to a real value
@@ -193,6 +193,84 @@ esac
 
 echo ""
 
+# ── LLM provider selection ─────────────────────────────────────────────
+
+# Check if LLM_API_KEY is already set in .env
+EXISTING_KEY=$(grep -E "^LLM_API_KEY=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)
+
+if [ -n "$EXISTING_KEY" ] && [ "$EXISTING_KEY" != "your-api-key" ]; then
+  echo -e "${BOLD}LLM provider:${NC}"
+  EXISTING_PROVIDER=$(grep -E "^LLM_PROVIDER=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)
+  echo -e "  ✅ Already configured (${EXISTING_PROVIDER:-unknown provider})"
+  echo ""
+else
+  echo -e "${BOLD}Choose your LLM provider:${NC}"
+  echo ""
+  echo -e "  ${BOLD}1)${NC} OpenAI       (default model: gpt-4o-mini)"
+  echo -e "  ${BOLD}2)${NC} Anthropic    (default model: claude-haiku-4-5-20251001)"
+  echo -e "  ${BOLD}3)${NC} Google Gemini (default model: gemini-2.0-flash)"
+  echo ""
+  printf "  Enter 1, 2, or 3: "
+  read -r PROVIDER_CHOICE
+
+  case "$PROVIDER_CHOICE" in
+    1)
+      LLM_PROVIDER="openai/gpt-4o-mini"
+      PROVIDER_NAME="OpenAI"
+      KEY_URL="https://platform.openai.com/api-keys"
+      ;;
+    2)
+      LLM_PROVIDER="anthropic/claude-haiku-4-5-20251001"
+      PROVIDER_NAME="Anthropic"
+      KEY_URL="https://console.anthropic.com"
+      ;;
+    3)
+      LLM_PROVIDER="gemini/gemini-2.0-flash"
+      PROVIDER_NAME="Google Gemini"
+      KEY_URL="https://aistudio.google.com/app/apikey"
+      ;;
+    *)
+      echo -e "  ${YELLOW}Invalid choice, defaulting to OpenAI${NC}"
+      LLM_PROVIDER="openai/gpt-4o-mini"
+      PROVIDER_NAME="OpenAI"
+      KEY_URL="https://platform.openai.com/api-keys"
+      ;;
+  esac
+
+  echo ""
+  echo -e "  Selected: ${BOLD}${PROVIDER_NAME}${NC} (${LLM_PROVIDER})"
+  echo ""
+  printf "  Enter your ${PROVIDER_NAME} API key: "
+  read -r LLM_API_KEY
+
+  if [ -z "$LLM_API_KEY" ]; then
+    echo -e "  ${RED}No API key entered. You can set it later in .env${NC}"
+    LLM_API_KEY="your-api-key"
+  fi
+
+  # Write LLM_PROVIDER and LLM_API_KEY into .env (replace or append)
+  if grep -qE "^LLM_PROVIDER=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+    sed -i.bak "s|^LLM_PROVIDER=.*|LLM_PROVIDER=${LLM_PROVIDER}|" "$PROJECT_ROOT/.env" && rm -f "$PROJECT_ROOT/.env.bak"
+  else
+    echo "LLM_PROVIDER=${LLM_PROVIDER}" >> "$PROJECT_ROOT/.env"
+  fi
+
+  if grep -qE "^LLM_API_KEY=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+    sed -i.bak "s|^LLM_API_KEY=.*|LLM_API_KEY=${LLM_API_KEY}|" "$PROJECT_ROOT/.env" && rm -f "$PROJECT_ROOT/.env.bak"
+  else
+    echo "LLM_API_KEY=${LLM_API_KEY}" >> "$PROJECT_ROOT/.env"
+  fi
+
+  echo ""
+  echo -e "  ${GREEN}✅ LLM provider configured${NC}"
+  echo ""
+  if [ "$LLM_API_KEY" = "your-api-key" ]; then
+    echo -e "  ${YELLOW}Reminder: set your API key in .env before running the MCPs${NC}"
+    echo -e "     Get your key at: ${BLUE}${KEY_URL}${NC}"
+    echo ""
+  fi
+fi
+
 # ── Next steps ─────────────────────────────────────────────────────────
 
 echo -e "${BOLD}${GREEN}✅ Setup complete!${NC}"
@@ -205,4 +283,6 @@ echo ""
 echo -e "  2. ${YELLOW}Add MCPs to Claude:${NC}"
 echo -e "     bash scripts/add-to-claude.sh --all"
 echo -e "     bash scripts/add-to-claude.sh --website-intel --techstack-intel"
+echo ""
+echo -e "  To change your LLM model, edit ${BLUE}LLM_PROVIDER${NC} in ${BLUE}.env${NC}"
 echo ""

@@ -10,7 +10,7 @@ MCP server that scrapes any website and extracts structured data as JSON using a
 
 ## Tools
 
-### `crawler_get_structured_info`
+### `website_intel_extract`
 
 Scrape or crawl a webpage and extract structured data matching your JSON schema.
 
@@ -30,7 +30,7 @@ Scrape or crawl a webpage and extract structured data matching your JSON schema.
 You: "Scrape acmecorp.com/pricing and extract their pricing tiers
       with tier name, price, and included features"
 
-Claude calls: crawler_get_structured_info({
+Claude calls: website_intel_extract({
   url: "https://acmecorp.com/pricing",
   schema: {
     type: "object",
@@ -74,10 +74,11 @@ Claude uses mode: "crawl", limit: 5
 
 ```bash
 # From the root of open-sales-stack:
-npm run setup
-# Add your OpenAI key to the root .env:
-nano .env
+bash scripts/setup.sh
+bash scripts/add-to-claude.sh --website-intel
 ```
+
+The setup script will prompt you to choose your LLM provider (OpenAI, Anthropic, or Gemini) and enter your API key.
 
 ### Environment variables
 
@@ -85,8 +86,10 @@ Configured in the root `.env` (shared by all MCPs). You can also create a `packa
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes | API key for LLM-based data extraction |
-| `LLM_PROVIDER` | No | Defaults to `openai/gpt-5-mini-2025-08-07` |
+| `LLM_API_KEY` | Yes | API key for your LLM provider — set by `bash scripts/setup.sh` |
+| `LLM_PROVIDER` | Yes | Provider and model string (e.g. `openai/gpt-5-mini-2025-08-07`, `anthropic/claude-haiku-4-5-20251001`, `gemini/gemini-2.5-flash`) |
+
+To use a different model, change `LLM_PROVIDER` in `.env`. The format follows [LiteLLM provider/model conventions](https://docs.litellm.ai/docs/providers).
 
 ### Add to Claude
 
@@ -100,7 +103,8 @@ Or manually:
 ```bash
 claude mcp add oss-website-intel \
   -s user \
-  -e OPENAI_API_KEY=your-api-key \
+  -e LLM_API_KEY=your-key \
+  -e LLM_PROVIDER=openai/gpt-5-mini-2025-08-07 \
   -- .venv/bin/python packages/website-intel/server.py
 ```
 
@@ -109,12 +113,12 @@ claude mcp add oss-website-intel \
 ## How it works
 
 1. You ask Claude to extract data from a URL
-2. Claude calls the `crawler_get_structured_info` tool
-3. The tool sends the URL to the local extraction server
-4. The server renders the page (full JavaScript execution), then uses an LLM to extract data matching your schema
+2. Claude calls the `website_intel_extract` tool
+3. The tool sends the URL to your local crawl4ai server
+4. crawl4ai renders the page (full JavaScript execution), then uses your configured LLM to extract data matching your schema
 5. Structured JSON is returned to Claude
 
-All processing happens locally on your machine. The only external API call is to OpenAI for the LLM extraction step.
+All processing happens locally on your machine. The only external API call is to your chosen LLM provider.
 
 ---
 

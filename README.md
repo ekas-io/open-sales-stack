@@ -10,27 +10,21 @@ Give Claude the ability to research companies and prospects using public web dat
 
 ## What's in here
 
-| MCP Server | Source | What you get |
+| MCP Server | What you get | Status |
 |---|---|---|
-| **[website-intel](packages/website-intel/)** | Any website | Product info, pricing, team pages, company details — extracted as structured data |
-| **[techstack-intel](packages/techstack-intel/)** | Company websites | CRM, marketing automation, analytics, chat, support tools — detected from page source |
-| **[social-intel](packages/social-intel/)** | LinkedIn — Profile scrape | Name, headline, location, about, work experiences, education, skills |
-| | LinkedIn — Company scrape | Company name, industry, size, headquarters, founded year, specialties, overview |
-| | LinkedIn — Company posts | Recent posts with text, reaction counts, comment counts, repost counts, dates |
-| **[hiring-intel](packages/hiring-intel/)** | Indeed | Job search across 60+ countries — best reliability, no rate limiting |
-| | LinkedIn | Global job search (rate-limits apply, proxies recommended for volume) |
-| | Glassdoor | Job search for select countries |
-| | Google Jobs | Job search via Google search syntax |
-| | ZipRecruiter | US & Canada job search |
-| | Bayt | International job search |
-| | Any careers page | Full job description extraction (Greenhouse, Lever, Ashby, Workday, etc.) |
-| **[review-intel](packages/review-intel/)** | G2 | Star rating, review count, category ranking, pros/cons themes |
-| | Capterra | Star rating, review count, reviewer breakdown |
-| | Glassdoor | Company rating, employee sentiment, CEO approval |
-| **[ad-intel](packages/ad-intel/)** | LinkedIn Ad Library | Active campaigns, ad creatives, targeting signals |
-| | Meta Ad Library | Active campaigns across Facebook and Instagram |
+| **[website-intel](packages/website-intel/)** | Product info, pricing, team pages, company details — extracted as structured data from any website | ✅ Ready |
+| **[techstack-intel](packages/techstack-intel/)** | CRM, marketing automation, analytics, chat, support tools — detected from page source | ✅ Ready |
+| **[social-intel](packages/social-intel/)** | LinkedIn company profiles, people profiles, company posts | ✅ Ready |
+| **[hiring-intel](packages/hiring-intel/)** | Open roles across Indeed, LinkedIn, Glassdoor, Google Jobs, ZipRecruiter, and direct careers pages | ✅ Ready |
+| **[ad-intel](packages/ad-intel/)** | Active campaigns, ad creatives, targeting signals — from LinkedIn Ad Library and Meta Ad Library | ✅ Ready |
+| **[review-intel](packages/review-intel/)** | Star ratings, review counts, pros/cons themes — from G2, Capterra, and Glassdoor | 🔄 In Progress |
+| **[funding-intel](packages/funding-intel/)** | Funding rounds, investors, total raised, valuations — from Crunchbase and public filings | 🔄 In Progress |
+| **[news-intel](packages/news-intel/)** | Recent press coverage, product launches, leadership changes, M&A activity | 🔄 In Progress |
+| **[financial-reporting-intel](packages/financial-reporting-intel/)** | 10-K/10-Q filings, revenue, growth rate, operating margins, guidance — for public companies | 🔄 In Progress |
+| **[firmographic-intel](packages/firmographic-intel/)** | Employee count, headcount growth, HQ location, founding year, industry, SIC/NAICS codes, legal entity name — all from public sources | 🔄 In Progress |
+| **[github-intel](packages/github-intel/)** | Public repos, stars, contributors, commit activity, open issues, tech stack signals — from GitHub public API | 🔄 In Progress |
 
-Requires an **OpenAI API key** for LLM-based extraction. Beyond that, no additional API keys are needed.
+An API key from **OpenAI, Anthropic, or Google Gemini** is required for LLM-based extraction. Beyond that, no additional API keys are needed.
 Each MCP runs locally on your machine. Your IP, your requests — no proxy infrastructure, no rate limiting concerns.
 
 ---
@@ -40,7 +34,7 @@ Each MCP runs locally on your machine. Your IP, your requests — no proxy infra
 You'll need two things installed before starting:
 
 - **Python 3.10+** — download from [python.org](https://python.org) or install via `brew install python@3.12`
-- **An OpenAI API key** — get one at [platform.openai.com](https://platform.openai.com)
+- **An LLM API key** — from [OpenAI](https://platform.openai.com), [Anthropic](https://console.anthropic.com), or [Google AI Studio](https://aistudio.google.com)
 
 Then run these commands in your terminal:
 
@@ -49,21 +43,21 @@ Then run these commands in your terminal:
 git clone https://github.com/ekas-io/open-sales-stack.git
 cd open-sales-stack
 
-# 2. Run setup (installs everything you need)
+# 2. Run setup (installs everything and prompts you to choose your LLM provider)
 bash scripts/setup.sh
 
-# 3. Add your OpenAI API key
-nano .env
-# Set OPENAI_API_KEY=sk-...
-
-# 4. Check that everything's working
+# 3. Verify your setup
 bash scripts/verify.sh
 
-# 5. Add all MCPs to Claude
+# 4. Add all MCPs to Claude
 bash scripts/add-to-claude.sh --all
 ```
 
-During setup, you'll be asked how you'd like to authenticate with LinkedIn (for social-intel):
+The setup script will ask you to choose between OpenAI, Anthropic, or Gemini and prompt for your API key. It configures everything in `.env` automatically.
+
+If you want to change the default model later, edit the `LLM_PROVIDER` value in your `.env` file. See `.env.example` for supported format.
+
+During setup, you'll also be asked how you'd like to authenticate with LinkedIn (for social-intel):
 
 1. **Skip** (default) — configure later; company scraping works without login
 2. **Browser login** — a browser window opens, you log in manually
@@ -71,7 +65,7 @@ During setup, you'll be asked how you'd like to authenticate with LinkedIn (for 
 
 See the [social-intel README](packages/social-intel/) for more details.
 
-That's it. If you only want specific MCPs, pick the ones you need:
+If you only want specific MCPs:
 
 ```bash
 bash scripts/add-to-claude.sh --website-intel --social-intel --hiring-intel
@@ -97,9 +91,12 @@ You: "Research Acme Corp for me"
 Claude calls: website-intel    → scrapes acmecorp.com, extracts product info, pricing, team
 Claude calls: techstack-intel  → detects they use HubSpot, Drift, Segment
 Claude calls: hiring-intel     → finds 3 open SDR roles on their Greenhouse page
-Claude calls: social-intel     → scrapes their VP Sales LinkedIn profile, pulls bio, experience, and recent posts
+Claude calls: social-intel     → finds their VP Sales on LinkedIn, pulls bio and recent posts
 Claude calls: review-intel     → pulls G2 rating (4.2/5, 47 reviews), Glassdoor sentiment
 Claude calls: ad-intel         → 12 active LinkedIn ad campaigns, 5 on Meta
+Claude calls: funding-intel    → Series B, $24M raised, led by Accel
+Claude calls: firmographic-intel → 320 employees, 40% headcount growth YoY
+Claude calls: news-intel       → 3 recent press mentions, product launch last month
 
 Claude: "Here's what I found about Acme Corp..."
 ```
