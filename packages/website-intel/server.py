@@ -32,7 +32,7 @@ load_dotenv(os.path.join(_pkg_dir, ".env"))
 load_dotenv(os.path.join(_root_dir, ".env"))
 
 LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
-LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai/gpt-4o-mini")
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai/gpt-5-mini-2025-08-07")
 
 if not LLM_API_KEY or LLM_API_KEY.startswith("your-"):
     print("Error: LLM_API_KEY is required. Run bash scripts/setup.sh or set it in .env", file=sys.stderr)

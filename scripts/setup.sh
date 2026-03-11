@@ -206,16 +206,16 @@ if [ -n "$EXISTING_KEY" ] && [ "$EXISTING_KEY" != "your-api-key" ]; then
 else
   echo -e "${BOLD}Choose your LLM provider:${NC}"
   echo ""
-  echo -e "  ${BOLD}1)${NC} OpenAI       (default model: gpt-4o-mini)"
-  echo -e "  ${BOLD}2)${NC} Anthropic    (default model: claude-haiku-4-5-20251001)"
-  echo -e "  ${BOLD}3)${NC} Google Gemini (default model: gemini-2.0-flash)"
+  echo -e "  ${BOLD}1)${NC} OpenAI        (default model: gpt-5-mini-2025-08-07)"
+  echo -e "  ${BOLD}2)${NC} Anthropic     (default model: claude-haiku-4-5-20251001)"
+  echo -e "  ${BOLD}3)${NC} Google Gemini (default model: gemini-2.5-flash)"
   echo ""
   printf "  Enter 1, 2, or 3: "
   read -r PROVIDER_CHOICE
 
   case "$PROVIDER_CHOICE" in
     1)
-      LLM_PROVIDER="openai/gpt-4o-mini"
+      LLM_PROVIDER="openai/gpt-5-mini-2025-08-07"
       PROVIDER_NAME="OpenAI"
       KEY_URL="https://platform.openai.com/api-keys"
       ;;
@@ -225,7 +225,7 @@ else
       KEY_URL="https://console.anthropic.com"
       ;;
     3)
-      LLM_PROVIDER="gemini/gemini-2.0-flash"
+      LLM_PROVIDER="gemini/gemini-2.5-flash"
       PROVIDER_NAME="Google Gemini"
       KEY_URL="https://aistudio.google.com/app/apikey"
       ;;
