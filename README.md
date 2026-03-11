@@ -53,6 +53,13 @@ bash scripts/verify.sh
 bash scripts/add-to-claude.sh --all
 ```
 
+By default, the script adds MCPs to **Claude Code** if the `claude` CLI is available, otherwise to **Claude Desktop**. You can override this:
+
+```bash
+bash scripts/add-to-claude.sh --all --desktop   # force Claude Desktop
+bash scripts/add-to-claude.sh --all --code      # force Claude Code
+```
+
 The setup script will ask you to choose between OpenAI, Anthropic, or Gemini and prompt for your API key. It configures everything in `.env` automatically.
 
 If you want to change the default model later, edit the `LLM_PROVIDER` value in your `.env` file. See `.env.example` for supported format.
