@@ -71,6 +71,18 @@ Extract the full content from a job posting URL or crawl a company's careers pag
 - LinkedIn job URLs are blocked by LinkedIn's anti-scraping measures. Use `search_jobs` with `site_name=["linkedin"]` and `linkedin_fetch_description=true` instead.
 - Works well with: company career sites, Greenhouse, Lever, Ashby, Workday, and most other ATS platforms.
 
+## Testing
+
+```bash
+pytest packages/hiring-intel/tests/ -v -s
+
+# Search jobs tests only
+pytest packages/hiring-intel/tests/test_search_jobs.py -v -s
+
+# Extract job description tests only
+pytest packages/hiring-intel/tests/test_extract_job_description.py -v -s
+```
+
 ## Environment Variables
 
 Set these in your root `.env` file if needed:

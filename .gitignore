@@ -31,3 +31,6 @@ linkedin_session.json
 
 # Logs
 *.log
+
+.claude
+.claude/

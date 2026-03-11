@@ -45,7 +45,7 @@ Search the LinkedIn Ad Library for ads by account owner, payer, or keyword.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `OPENAI_API_KEY` | — | Required. API key for the LLM provider |
+| `LLM_API_KEY` | — | Required. API key for the LLM provider |
 | `LLM_PROVIDER` | `openai/gpt-5-mini-2025-08-07` | LLM provider for extraction |
 
 ## Running

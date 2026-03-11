@@ -6,8 +6,9 @@ Returns structured details including ad count, creative details, CTAs, and run d
 """
 
 import logging
+import re
 
-from lib.crawler import extract_structured_data
+from lib.crawler import extract_structured_data, fetch_markdown
 from lib.url_builder import build_meta_ad_library_url
 
 logger = logging.getLogger("ad-intel")
@@ -21,22 +22,14 @@ VALID_AD_TYPES = [
 ]
 
 EXTRACTION_PROMPT = """\
-Extract all visible ad results from the Meta Ad Library page.
-For each ad, extract:
-- The advertiser/page name
-- The ad creative text / primary text / body copy
-- The headline (if present)
-- The call-to-action button text (e.g. "Learn More", "Sign Up", "Shop Now")
-- The description or link description
-- The "Started running on" date
-- The platform(s) the ad runs on (Facebook, Instagram, Messenger, Audience Network)
-- Whether the ad contains an image, video, or carousel
-- Any visible landing page URL or domain
-
-Also extract the total result count shown at the top of the page \
-(e.g. "~220 results" or "About 220 results"). This is typically displayed \
-near the top as "X results" with a subtitle like \
-"These results include ads that match your keyword search."
+From the Meta Ad Library page, extract a high-level summary of the ads being run.
+Do NOT list every individual ad. Instead extract:
+- The total result count shown at the top (e.g. "~220 results" or "About 220 results")
+- The ad formats in use (image, video, carousel, etc.)
+- The main themes or topics the ads cover (2-5 bullet points)
+- The typical CTA buttons used (e.g. "Learn More", "Sign Up", "Shop Now")
+- The platforms the ads run on (Facebook, Instagram, etc.)
+- A sample of up to 5 individual ads with basic details
 """
 
 OUTPUT_SCHEMA = {
@@ -50,39 +43,38 @@ OUTPUT_SCHEMA = {
             "type": "integer",
             "description": "Parsed numeric count of total results, e.g. 220",
         },
+        "ad_formats": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Distinct ad formats seen (e.g. image, video, carousel)",
+        },
+        "themes": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Main topics or themes the ads cover",
+        },
+        "cta_buttons": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "CTA button labels observed",
+        },
+        "platforms": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Platforms ads run on",
+        },
         "ads": {
             "type": "array",
+            "description": "Sample of individual ads (up to 5)",
             "items": {
                 "type": "object",
                 "properties": {
                     "advertiser_name": {"type": "string"},
-                    "primary_text": {
-                        "type": "string",
-                        "description": "The main ad body/creative text",
-                    },
+                    "primary_text": {"type": "string"},
                     "headline": {"type": "string"},
-                    "description": {
-                        "type": "string",
-                        "description": "Link description or secondary text",
-                    },
-                    "cta_button": {
-                        "type": "string",
-                        "description": "Call to action text, e.g. Learn More, Sign Up",
-                    },
-                    "started_running_on": {
-                        "type": "string",
-                        "description": "Date the ad started running, e.g. Mar 1, 2026",
-                    },
-                    "platforms": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Platforms: Facebook, Instagram, Messenger, Audience Network",
-                    },
-                    "media_type": {
-                        "type": "string",
-                        "description": "image, video, or carousel",
-                    },
-                    "landing_page_url": {"type": "string"},
+                    "cta_button": {"type": "string"},
+                    "started_running_on": {"type": "string"},
+                    "media_type": {"type": "string"},
                 },
             },
         },
@@ -133,6 +125,15 @@ async def ad_intel_meta_search(
     logger.info("Searching Meta Ad Library: query=%s country=%s", query, country)
 
     try:
+        # Quick pre-check: fetch raw markdown to detect zero results without LLM.
+        # Look for a non-zero result count (e.g. "~230 results", "About 45 results").
+        # If no such pattern is found, the page has no ads — skip the LLM call.
+        raw_md = await fetch_markdown(url, delay_before_return_html=3)
+        has_results = bool(re.search(r"[1-9]\d*\s*results?", raw_md, re.IGNORECASE))
+        if raw_md and not has_results:
+            logger.info("Zero results detected for query=%s, skipping LLM extraction", query)
+            return {**EMPTY_RESULT, "search_url": url}
+
         data = await extract_structured_data(
             url=url,
             prompt=EXTRACTION_PROMPT,

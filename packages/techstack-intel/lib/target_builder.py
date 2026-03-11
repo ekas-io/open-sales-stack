@@ -15,8 +15,8 @@ import httpx
 
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 
-from techstack_intel.models import DetectionTarget
-from techstack_intel.utils.helpers import (
+from lib.models import DetectionTarget
+from lib.utils.helpers import (
     extract_domain,
     extract_inline_scripts,
     extract_link_tags,
@@ -24,7 +24,7 @@ from techstack_intel.utils.helpers import (
     extract_scripts,
     normalize_url,
 )
-from techstack_intel.signatures.database import CNAME_SUBDOMAINS
+from lib.signatures.database import CNAME_SUBDOMAINS
 
 logger = logging.getLogger("techstack-intel.target_builder")
 

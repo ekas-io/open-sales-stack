@@ -62,6 +62,12 @@ Claude uses mode: "crawl", limit: 5
 
 ---
 
+## Testing
+
+```bash
+pytest packages/website-intel/tests/ -v -s
+```
+
 ## Setup
 
 ### Prerequisites

@@ -26,6 +26,10 @@ if [ $# -eq 0 ]; then
   echo -e "  bash scripts/add-to-claude.sh --all"
   echo -e "  bash scripts/add-to-claude.sh --website-intel --techstack-intel"
   echo ""
+  echo -e "${BOLD}Options:${NC}"
+  echo -e "  --desktop    Add to Claude Desktop (instead of Claude Code)"
+  echo -e "  --code       Add to Claude Code (default if claude CLI is available)"
+  echo ""
   echo -e "${BOLD}Available MCPs:${NC}"
   for pkg_dir in "$PROJECT_ROOT"/packages/*/; do
     if [ -d "$pkg_dir" ] && [ -f "$pkg_dir/server.py" ]; then
@@ -37,12 +41,20 @@ if [ $# -eq 0 ]; then
 fi
 
 INSTALL_ALL=false
+FORCE_DESKTOP=false
+FORCE_CODE=false
 SELECTED=()
 
 for arg in "$@"; do
   case "$arg" in
     --all)
       INSTALL_ALL=true
+      ;;
+    --desktop)
+      FORCE_DESKTOP=true
+      ;;
+    --code)
+      FORCE_CODE=true
       ;;
     --*)
       pkg_name="${arg#--}"
@@ -88,17 +100,27 @@ echo ""
 # ── Detect Claude Code vs Claude Desktop ───────────────────────────────
 
 USE_CLAUDE_CODE=false
-if command -v claude &> /dev/null; then
+
+if [ "$FORCE_DESKTOP" = true ]; then
+  USE_CLAUDE_CODE=false
+elif [ "$FORCE_CODE" = true ]; then
+  USE_CLAUDE_CODE=true
+elif command -v claude &> /dev/null; then
   USE_CLAUDE_CODE=true
 fi
 
-# ── Add each package ──────────────────────────────────────────────────
+if [ "$USE_CLAUDE_CODE" = true ]; then
+  echo -e "  Target: ${BOLD}Claude Code${NC} (~/.claude.json)"
+  echo -e "  ${YELLOW}(use --desktop to add to Claude Desktop instead)${NC}"
+else
+  echo -e "  Target: ${BOLD}Claude Desktop${NC}"
+fi
+echo ""
 
-for pkg_name in "${PACKAGES_TO_INSTALL[@]}"; do
-  pkg_dir="$PROJECT_ROOT/packages/$pkg_name"
-  mcp_name="oss-${pkg_name}"  # prefix to avoid conflicts
+# ── Collect env vars (shared across packages) ──────────────────────────
 
-  # Collect env vars from .env files (root first, package overrides)
+collect_env_vars() {
+  local pkg_dir="$1"
   ENV_KEYS=()
   ENV_VALS=()
   for env_file in "$PROJECT_ROOT/.env" "$pkg_dir/.env"; do
@@ -123,9 +145,82 @@ for pkg_name in "${PACKAGES_TO_INSTALL[@]}"; do
       fi
     done < "$env_file"
   done
+}
 
-  if [ "$USE_CLAUDE_CODE" = true ]; then
-    # Claude Code: use `claude mcp add`
+# ── Claude Desktop: write config file ─────────────────────────────────
+
+add_to_desktop_config() {
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    CONFIG_DIR="$HOME/Library/Application Support/Claude"
+  else
+    CONFIG_DIR="${APPDATA:-$HOME/.config}/Claude"
+  fi
+  CONFIG_FILE="$CONFIG_DIR/claude_desktop_config.json"
+
+  # Create directory if needed
+  mkdir -p "$CONFIG_DIR"
+
+  # Create config file if it doesn't exist
+  if [ ! -f "$CONFIG_FILE" ]; then
+    echo '{}' > "$CONFIG_FILE"
+  fi
+
+  # Read current config
+  local config
+  config=$(cat "$CONFIG_FILE")
+
+  # Ensure mcpServers key exists
+  if ! echo "$config" | python3 -c "import json,sys; d=json.load(sys.stdin); d['mcpServers']" 2>/dev/null; then
+    config=$(echo "$config" | python3 -c "import json,sys; d=json.load(sys.stdin); d['mcpServers']={}; json.dump(d,sys.stdout,indent=2)")
+  fi
+
+  # Add each package
+  for pkg_name in "${PACKAGES_TO_INSTALL[@]}"; do
+    local pkg_dir="$PROJECT_ROOT/packages/$pkg_name"
+    local mcp_name="oss-${pkg_name}"
+
+    collect_env_vars "$pkg_dir"
+
+    # Build env JSON object
+    local env_json="{"
+    for i in "${!ENV_KEYS[@]}"; do
+      [ "$i" -gt 0 ] && env_json="$env_json,"
+      env_json="$env_json\"${ENV_KEYS[$i]}\":\"${ENV_VALS[$i]}\""
+    done
+    env_json="$env_json}"
+
+    # Use python3 to safely merge into the config
+    config=$(echo "$config" | python3 -c "
+import json, sys
+config = json.load(sys.stdin)
+if 'mcpServers' not in config:
+    config['mcpServers'] = {}
+config['mcpServers']['$mcp_name'] = {
+    'command': '$VENV_PYTHON',
+    'args': ['$pkg_dir/server.py'],
+    'env': json.loads('$env_json')
+}
+json.dump(config, sys.stdout, indent=2)
+")
+
+    echo -e "  ${GREEN}✅ ${pkg_name}${NC} added as ${BOLD}${mcp_name}${NC}"
+  done
+
+  # Write updated config
+  echo "$config" > "$CONFIG_FILE"
+  echo ""
+  echo -e "  File modified: ${BLUE}${CONFIG_FILE}${NC}"
+}
+
+# ── Add each package ──────────────────────────────────────────────────
+
+if [ "$USE_CLAUDE_CODE" = true ]; then
+  for pkg_name in "${PACKAGES_TO_INSTALL[@]}"; do
+    pkg_dir="$PROJECT_ROOT/packages/$pkg_name"
+    mcp_name="oss-${pkg_name}"
+
+    collect_env_vars "$pkg_dir"
+
     echo -e "  Adding ${BLUE}${pkg_name}${NC} via Claude Code..."
 
     # Remove existing if present (ignore errors)
@@ -144,30 +239,10 @@ for pkg_name in "${PACKAGES_TO_INSTALL[@]}"; do
       -- "$VENV_PYTHON" "$pkg_dir/server.py"
 
     echo -e "  ${GREEN}✅ ${pkg_name}${NC} added as ${BOLD}${mcp_name}${NC}"
-  else
-    # Claude Desktop: generate config snippet
-    echo -e "  ${BLUE}${pkg_name}${NC}:"
-
-    # Build env JSON
-    ENV_JSON=""
-    for i in "${!ENV_KEYS[@]}"; do
-      [ -n "$ENV_JSON" ] && ENV_JSON="$ENV_JSON, "
-      ENV_JSON="$ENV_JSON\"${ENV_KEYS[$i]}\": \"${ENV_VALS[$i]}\""
-    done
-
-    cat << SNIPPET
-
-    "${mcp_name}": {
-      "command": "${VENV_PYTHON}",
-      "args": ["${pkg_dir}/server.py"],
-      "env": {
-        ${ENV_JSON}
-      }
-    }
-
-SNIPPET
-  fi
-done
+  done
+else
+  add_to_desktop_config
+fi
 
 echo ""
 
@@ -176,14 +251,6 @@ if [ "$USE_CLAUDE_CODE" = true ]; then
   echo ""
   echo -e "Verify with: ${BLUE}claude mcp list${NC}"
 else
-  echo -e "${YELLOW}Claude Desktop detected. Add the config snippets above to:${NC}"
-  echo ""
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo -e "  ${BLUE}~/Library/Application Support/Claude/claude_desktop_config.json${NC}"
-  else
-    echo -e "  ${BLUE}%APPDATA%\\Claude\\claude_desktop_config.json${NC}"
-  fi
-  echo ""
-  echo -e "Then restart Claude Desktop."
+  echo -e "${GREEN}✅ Done! Restart Claude Desktop to use your new MCPs.${NC}"
 fi
 echo ""

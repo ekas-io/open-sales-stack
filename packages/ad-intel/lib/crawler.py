@@ -15,20 +15,6 @@ from crawl4ai.extraction_strategy import LLMExtractionStrategy
 
 logger = logging.getLogger("ad-intel")
 
-# ── Shared crawler instance ─────────────────────────────────────────────
-
-_crawler: AsyncWebCrawler | None = None
-
-
-async def get_crawler() -> AsyncWebCrawler:
-    """Lazily initialize a shared browser instance."""
-    global _crawler
-    if _crawler is None:
-        browser_config = BrowserConfig(headless=True)
-        _crawler = AsyncWebCrawler(config=browser_config)
-        await _crawler.__aenter__()
-    return _crawler
-
 
 # ── Extraction logic ────────────────────────────────────────────────────
 
@@ -38,9 +24,11 @@ def _build_run_config(
     schema: dict[str, Any],
     input_format: str,
     delay_before_return_html: int = 5,
+    magic: bool = False,
+    wait_for: str | None = None,
 ) -> CrawlerRunConfig:
     """Build a CrawlerRunConfig with LLM extraction strategy."""
-    llm_api_key = os.environ.get("OPENAI_API_KEY", "")
+    llm_api_key = os.environ.get("LLM_API_KEY", "")
     llm_provider = os.environ.get("LLM_PROVIDER", "openai/gpt-5-mini-2025-08-07")
 
     extraction = LLMExtractionStrategy(
@@ -54,7 +42,8 @@ def _build_run_config(
         extraction_strategy=extraction,
         delay_before_return_html=delay_before_return_html,
         page_timeout=60000,
-        magic=True,
+        magic=magic,
+        wait_for=wait_for,
     )
 
 
@@ -94,6 +83,20 @@ def _parse_result(result: Any) -> Any:
     return parsed
 
 
+async def fetch_markdown(url: str, delay_before_return_html: int = 3) -> str:
+    """Fetch a page and return its markdown without LLM extraction."""
+    browser_config = BrowserConfig(headless=True)
+    config = CrawlerRunConfig(
+        delay_before_return_html=delay_before_return_html,
+        page_timeout=30000,
+    )
+    async with AsyncWebCrawler(config=browser_config) as crawler:
+        result = await crawler.arun(url=url, config=config)
+    if not result.success:
+        return ""
+    return result.markdown or ""
+
+
 async def extract_structured_data(
     url: str,
     prompt: str,
@@ -102,6 +105,7 @@ async def extract_structured_data(
     limit: int = 5,
     wait_for: str | None = None,
     delay_before_return_html: int = 5,
+    magic: bool = False,
 ) -> dict:
     """
     Extract structured data from a URL using crawl4ai.
@@ -115,39 +119,43 @@ async def extract_structured_data(
         schema: JSON Schema defining the shape of data to return.
         mode: "scrape" for single-page (only mode currently used).
         limit: Max pages for crawl mode (reserved for future use).
-        wait_for: CSS selector to wait for before extraction (unused with magic=True).
+        wait_for: CSS selector to wait for before extraction.
         delay_before_return_html: Seconds to wait for JS rendering.
+        magic: Enable crawl4ai magic mode (auto-scroll, click handling).
+               Disabled by default — enabling causes full-page scrolling
+               which dramatically increases extraction time on paginated pages.
 
     Returns:
         Parsed extracted data dict.
     """
-    logger.info("Starting extraction: url=%s mode=%s", url, mode)
-    crawler = await get_crawler()
+    logger.info("Starting extraction: url=%s mode=%s magic=%s", url, mode, magic)
+    browser_config = BrowserConfig(headless=True)
 
-    # Try markdown first (cheaper on tokens)
-    config = _build_run_config(prompt, schema, "markdown", delay_before_return_html)
-    result = await crawler.arun(url=url, config=config)
+    async with AsyncWebCrawler(config=browser_config) as crawler:
+        # Try markdown first (cheaper on tokens)
+        config = _build_run_config(prompt, schema, "markdown", delay_before_return_html, magic, wait_for)
+        result = await crawler.arun(url=url, config=config)
 
-    if not result.success:
-        error_msg = getattr(result, "error_message", "unknown error")
-        raise RuntimeError(f"crawl4ai extraction failed: {error_msg}")
+        if not result.success:
+            error_msg = getattr(result, "error_message", "unknown error")
+            raise RuntimeError(f"crawl4ai extraction failed: {error_msg}")
 
-    data = _parse_result(result)
+        data = _parse_result(result)
 
-    if data:
-        logger.info("Extraction completed (markdown): url=%s", url)
-        return data
+        if data:
+            logger.info("Extraction completed (markdown): url=%s", url)
+            return data
 
-    # Fall back to HTML for JS-heavy SPAs
-    logger.info("Markdown returned empty, retrying with HTML: url=%s", url)
-    config = _build_run_config(prompt, schema, "html", delay_before_return_html)
-    result = await crawler.arun(url=url, config=config)
+        # Fall back to HTML for JS-heavy SPAs
+        logger.info("Markdown returned empty, retrying with HTML: url=%s", url)
+        config = _build_run_config(prompt, schema, "html", delay_before_return_html, magic, wait_for)
+        result = await crawler.arun(url=url, config=config)
 
-    if not result.success:
-        error_msg = getattr(result, "error_message", "unknown error")
-        raise RuntimeError(f"crawl4ai HTML fallback failed: {error_msg}")
+        if not result.success:
+            error_msg = getattr(result, "error_message", "unknown error")
+            raise RuntimeError(f"crawl4ai HTML fallback failed: {error_msg}")
 
-    data = _parse_result(result)
-    logger.info("Extraction completed (html fallback): url=%s", url)
+        data = _parse_result(result)
+        logger.info("Extraction completed (html fallback): url=%s", url)
 
     return data or {}

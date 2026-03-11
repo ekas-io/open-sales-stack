@@ -1,0 +1,19 @@
+[project]
+name = "review-intel-mcp"
+version = "0.1.0"
+description = "MCP server for extracting review data from G2, Capterra, and Glassdoor"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

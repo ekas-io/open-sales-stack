@@ -6,16 +6,16 @@ import asyncio
 import logging
 import time
 
-from techstack_intel.detectors.base import BaseDetector
-from techstack_intel.detectors.cookie_detector import CookieDetector
-from techstack_intel.detectors.dns_detector import DNSDetector
-from techstack_intel.detectors.favicon_detector import FaviconDetector
-from techstack_intel.detectors.header_detector import HeaderDetector
-from techstack_intel.detectors.html_detector import HTMLDetector
-from techstack_intel.detectors.robots_detector import RobotsDetector
-from techstack_intel.detectors.ssl_detector import SSLDetector
-from techstack_intel.models import DetectedTechnology, TechStackReport
-from techstack_intel.target_builder import build_target
+from lib.detectors.base import BaseDetector
+from lib.detectors.cookie_detector import CookieDetector
+from lib.detectors.dns_detector import DNSDetector
+from lib.detectors.favicon_detector import FaviconDetector
+from lib.detectors.header_detector import HeaderDetector
+from lib.detectors.html_detector import HTMLDetector
+from lib.detectors.robots_detector import RobotsDetector
+from lib.detectors.ssl_detector import SSLDetector
+from lib.models import DetectedTechnology, TechStackReport
+from lib.target_builder import build_target
 
 logger = logging.getLogger("techstack-intel.analyzer")
 
@@ -83,25 +83,11 @@ def _merge_technologies(all_results: list[DetectedTechnology]) -> list[DetectedT
     ]
 
 
-async def analyze(url: str) -> TechStackReport:
-    """Analyze a URL and return a comprehensive tech stack report.
-
-    1. Builds a DetectionTarget (page fetch, DNS, SSL, robots in parallel)
-    2. Runs all detectors in parallel against the target
-    3. Merges and deduplicates results
-    4. Returns a TechStackReport
-    """
-    start_time = time.monotonic()
-
-    # Step 1: Build the detection target
-    logger.info("Building detection target for %s", url)
-    target = await build_target(url)
-
-    # Step 2: Run all detectors in parallel
-    logger.info("Running %d detectors", len(ALL_DETECTORS))
+async def _run_detectors(target) -> tuple[list[DetectedTechnology], dict[str, str]]:
+    """Run all detectors in parallel. Returns (flat tech list, error dict)."""
     detector_errors: dict[str, str] = {}
 
-    async def _run_detector(detector: BaseDetector) -> list[DetectedTechnology]:
+    async def _run_one(detector: BaseDetector) -> list[DetectedTechnology]:
         try:
             return await detector.detect(target)
         except Exception as e:
@@ -109,23 +95,14 @@ async def analyze(url: str) -> TechStackReport:
             detector_errors[detector.name] = str(e)
             return []
 
-    detector_tasks = [_run_detector(d) for d in ALL_DETECTORS]
-    all_detector_results = await asyncio.gather(*detector_tasks)
+    results = await asyncio.gather(*[_run_one(d) for d in ALL_DETECTORS])
+    all_techs: list[DetectedTechnology] = [t for result_list in results for t in result_list]
+    return all_techs, detector_errors
 
-    # Step 3: Flatten and merge results
-    all_techs: list[DetectedTechnology] = []
-    for result_list in all_detector_results:
-        all_techs.extend(result_list)
 
-    merged = _merge_technologies(all_techs)
-
-    # Sort by confidence descending, then by name
-    merged.sort(key=lambda t: (-t.confidence, t.name))
-
-    elapsed = time.monotonic() - start_time
-
-    # Step 4: Build report
-    report = TechStackReport(
+def _build_report(target, merged, elapsed, detector_errors) -> TechStackReport:
+    """Assemble a TechStackReport from merged detection results."""
+    return TechStackReport(
         url=target.url,
         final_url=target.final_url,
         domain=target.domain,
@@ -143,9 +120,22 @@ async def analyze(url: str) -> TechStackReport:
         },
     )
 
-    logger.info(
-        "Analysis complete for %s: %d technologies found in %.1fs",
-        url, len(merged), elapsed,
-    )
 
+async def analyze(url: str) -> TechStackReport:
+    """Analyze a URL and return a comprehensive tech stack report."""
+    start_time = time.monotonic()
+
+    logger.info("Building detection target for %s", url)
+    target = await build_target(url)
+
+    logger.info("Running %d detectors", len(ALL_DETECTORS))
+    all_techs, detector_errors = await _run_detectors(target)
+
+    merged = _merge_technologies(all_techs)
+    merged.sort(key=lambda t: (-t.confidence, t.name))
+
+    elapsed = time.monotonic() - start_time
+    report = _build_report(target, merged, elapsed, detector_errors)
+
+    logger.info("Analysis complete for %s: %d technologies in %.1fs", url, len(merged), elapsed)
     return report

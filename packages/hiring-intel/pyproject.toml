@@ -1,0 +1,22 @@
+[project]
+name = "hiring-intel-mcp"
+version = "0.1.0"
+description = "MCP server for searching job postings and extracting job descriptions"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]",
+    "crawl4ai[all]",
+    "python-dotenv",
+    "python-jobspy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pandas",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

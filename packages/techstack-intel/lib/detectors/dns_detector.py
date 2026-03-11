@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from techstack_intel.detectors.base import BaseDetector
-from techstack_intel.models import DetectedTechnology, DetectionTarget
-from techstack_intel.signatures.database import (
+from lib.detectors.base import BaseDetector
+from lib.models import DetectedTechnology, DetectionTarget
+from lib.signatures.database import (
     CNAME_TARGET_MAP,
     MX_PROVIDER_MAP,
     NS_PROVIDER_MAP,
