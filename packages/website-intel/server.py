@@ -38,8 +38,6 @@ if not LLM_API_KEY or LLM_API_KEY.startswith("your-"):
     print("Error: LLM_API_KEY is required. Run bash scripts/setup.sh or set it in .env", file=sys.stderr)
     sys.exit(1)
 
-LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai/gpt-5-mini-2025-08-07")
-
 # ── Logging ──────────────────────────────────────────────────────────────
 
 logging.basicConfig(

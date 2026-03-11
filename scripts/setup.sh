@@ -94,23 +94,6 @@ else
   echo -e "  .env already exists"
 fi
 
-# Check if OPENAI_API_KEY is already set to a real value
-CURRENT_KEY=$(grep -E '^OPENAI_API_KEY=' "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2-)
-if [ -z "$CURRENT_KEY" ] || [ "$CURRENT_KEY" = "your-api-key" ]; then
-  echo ""
-  echo -e "  ${YELLOW}An OpenAI API key is required for LLM-based extraction.${NC}"
-  echo -ne "  Enter your OpenAI API key (or press Enter to skip): "
-  read -r API_KEY
-  if [ -n "$API_KEY" ]; then
-    sed -i '' "s|^OPENAI_API_KEY=.*|OPENAI_API_KEY=${API_KEY}|" "$PROJECT_ROOT/.env"
-    echo -e "  ${GREEN}✅ API key saved to .env${NC}"
-  else
-    echo -e "  ${YELLOW}⚠  Skipped. Set OPENAI_API_KEY in .env before using the tools.${NC}"
-  fi
-else
-  echo -e "  ✅ API key already configured"
-fi
-
 echo ""
 
 # ── LinkedIn setup (social-intel) ─────────────────────────────────────
@@ -231,7 +214,7 @@ else
       ;;
     *)
       echo -e "  ${YELLOW}Invalid choice, defaulting to OpenAI${NC}"
-      LLM_PROVIDER="openai/gpt-4o-mini"
+      LLM_PROVIDER="openai/gpt-5-mini-2025-08-07"
       PROVIDER_NAME="OpenAI"
       KEY_URL="https://platform.openai.com/api-keys"
       ;;
