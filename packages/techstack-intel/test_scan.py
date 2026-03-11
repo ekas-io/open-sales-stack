@@ -8,7 +8,7 @@ import os
 # Add package to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from techstack_intel import analyze
+from lib.analyzer import analyze
 
 
 async def main():

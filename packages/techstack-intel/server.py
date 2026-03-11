@@ -2,10 +2,8 @@
 techstack-intel MCP server.
 
 Detects technologies used by a company from their website.
-Run directly: python packages/techstack-intel/server.py
 """
 
-import json
 import logging
 import os
 import sys
@@ -18,8 +16,8 @@ from mcp.server.fastmcp import FastMCP
 _pkg_dir = os.path.dirname(os.path.abspath(__file__))
 _root_dir = os.path.dirname(os.path.dirname(_pkg_dir))
 
-# Add package to Python path so techstack_intel is importable
-sys.path.insert(0, _pkg_dir)
+if _pkg_dir not in sys.path:
+    sys.path.insert(0, _pkg_dir)
 
 load_dotenv(os.path.join(_pkg_dir, ".env"))
 load_dotenv(os.path.join(_root_dir, ".env"))
@@ -58,18 +56,12 @@ confidence score (0-1), and evidence trail."""
 @mcp.tool(description=TOOL_DESCRIPTION)
 async def detect_techstack(url: str) -> str:
     """Detect the technology stack used by a company website."""
-    from techstack_intel.analyzer import analyze
+    from tools.detect_techstack import detect_techstack as _detect
 
-    if not url.startswith(("http://", "https://")):
-        url = f"https://{url}"
+    return await _detect(url)
 
-    try:
-        report = await analyze(url)
-        return json.dumps(report.to_dict(), indent=2, default=str)
-    except Exception as e:
-        logger.error("Analysis failed for %s: %s", url, e)
-        return json.dumps({"error": str(e), "status": "failed"})
 
+# ── Entry point ──────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")

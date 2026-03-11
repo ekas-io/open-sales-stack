@@ -22,21 +22,14 @@ VALID_DATE_OPTIONS = [
 ]
 
 EXTRACTION_PROMPT = """\
-Extract all visible ad results from the LinkedIn Ad Library page.
-For each ad, extract:
-- The advertiser/company name
-- The ad format (single image, video, carousel, text, document, event, etc.)
-- The ad copy / primary text content
-- The headline text
-- The call-to-action button text (e.g. "Learn more", "Sign up", "Download")
-- The impression range shown (e.g. "1K - 10K impressions")
-- The date range the ad ran or has been running
-- Whether the ad is currently active or inactive
-- The landing page URL or domain if visible
-- Any visible sponsorship/payer info
-
-Also extract the total number of results shown on the page \
-(e.g. "Showing 1 - 10 of 45 results" or similar count indicator).
+From the LinkedIn Ad Library page, extract a high-level summary of the ads being run.
+Do NOT list every individual ad. Instead extract:
+- The total number of results shown (e.g. "Showing 1 - 25 of 180 results")
+- The ad formats in use (e.g. single image, video, carousel, text)
+- The main themes or topics the ads cover (2-5 bullet points)
+- The typical CTA buttons used (e.g. "Learn More", "Sign Up")
+- Whether ads appear to be currently active
+- The date range most ads are running in
 """
 
 OUTPUT_SCHEMA = {
@@ -50,33 +43,38 @@ OUTPUT_SCHEMA = {
             "type": "integer",
             "description": "Parsed numeric count",
         },
+        "ad_formats": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Distinct ad formats seen (e.g. single image, video, carousel)",
+        },
+        "themes": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Main topics or themes the ads cover",
+        },
+        "cta_buttons": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "CTA button labels observed",
+        },
+        "date_range": {
+            "type": "string",
+            "description": "Typical date range ads are running",
+        },
         "ads": {
             "type": "array",
+            "description": "Sample of individual ads (up to 5)",
             "items": {
                 "type": "object",
                 "properties": {
                     "advertiser_name": {"type": "string"},
-                    "ad_format": {
-                        "type": "string",
-                        "description": "single image, video, carousel, text, document, event",
-                    },
-                    "primary_text": {
-                        "type": "string",
-                        "description": "The main ad copy",
-                    },
+                    "ad_format": {"type": "string"},
+                    "primary_text": {"type": "string"},
                     "headline": {"type": "string"},
                     "cta_button": {"type": "string"},
-                    "impression_range": {
-                        "type": "string",
-                        "description": "e.g. '1K - 10K'",
-                    },
-                    "date_range": {
-                        "type": "string",
-                        "description": "When the ad ran or started",
-                    },
-                    "is_active": {"type": "boolean"},
-                    "landing_page_url": {"type": "string"},
-                    "payer_info": {"type": "string"},
+                    "started_running_on": {"type": "string"},
+                    "media_type": {"type": "string"},
                 },
             },
         },

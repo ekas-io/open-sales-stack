@@ -6,14 +6,14 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from techstack_intel.models import DetectionTarget
-from techstack_intel.detectors.header_detector import HeaderDetector
-from techstack_intel.detectors.html_detector import HTMLDetector
-from techstack_intel.detectors.dns_detector import DNSDetector
-from techstack_intel.detectors.ssl_detector import SSLDetector
-from techstack_intel.detectors.robots_detector import RobotsDetector
-from techstack_intel.detectors.cookie_detector import CookieDetector
-from techstack_intel.detectors.favicon_detector import FaviconDetector
+from lib.models import DetectionTarget
+from lib.detectors.header_detector import HeaderDetector
+from lib.detectors.html_detector import HTMLDetector
+from lib.detectors.dns_detector import DNSDetector
+from lib.detectors.ssl_detector import SSLDetector
+from lib.detectors.robots_detector import RobotsDetector
+from lib.detectors.cookie_detector import CookieDetector
+from lib.detectors.favicon_detector import FaviconDetector
 
 
 def _make_target(**kwargs) -> DetectionTarget:

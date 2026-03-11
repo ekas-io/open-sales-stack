@@ -1,0 +1,22 @@
+[project]
+name = "techstack-intel-mcp"
+version = "0.1.0"
+description = "MCP server for detecting technology stacks from company websites"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]",
+    "python-dotenv",
+    "httpx",
+    "dnspython",
+    "tldextract",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

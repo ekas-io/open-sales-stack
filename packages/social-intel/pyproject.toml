@@ -1,0 +1,20 @@
+[project]
+name = "social-intel-mcp"
+version = "0.1.0"
+description = "MCP server for scraping LinkedIn profiles, companies, and posts"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]",
+    "python-dotenv",
+    "linkedin-scraper>=3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

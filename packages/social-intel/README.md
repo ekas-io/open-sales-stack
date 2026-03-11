@@ -50,6 +50,21 @@ Scrape recent posts from a LinkedIn company page.
 
 ---
 
+## Testing
+
+```bash
+pytest packages/social-intel/tests/ -v -s
+
+# Profile tests only
+pytest packages/social-intel/tests/test_profile.py -v -s
+
+# Company tests only
+pytest packages/social-intel/tests/test_company.py -v -s
+
+# Company posts tests only
+pytest packages/social-intel/tests/test_company_posts.py -v -s
+```
+
 ## LinkedIn Authentication
 
 A LinkedIn account is required. During `bash scripts/setup.sh`, you'll be prompted to choose one of three options:

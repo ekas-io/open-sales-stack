@@ -1,0 +1,20 @@
+[project]
+name = "website-intel-mcp"
+version = "0.1.0"
+description = "MCP server for scraping websites and extracting structured data"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]",
+    "crawl4ai[all]",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

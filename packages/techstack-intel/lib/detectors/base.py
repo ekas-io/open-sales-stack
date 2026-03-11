@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from techstack_intel.models import DetectedTechnology, DetectionTarget
+from lib.models import DetectedTechnology, DetectionTarget
 
 
 class BaseDetector(ABC):

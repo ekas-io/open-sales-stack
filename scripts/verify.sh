@@ -30,7 +30,7 @@ fi
 
 # Format: "package_name|var1,var2,...|optional_var1,optional_var2,..."
 PACKAGES=(
-  "website-intel|OPENAI_API_KEY|"
+  "website-intel|LLM_API_KEY|"
   "techstack-intel||"
   "social-intel||LINKEDIN_EMAIL,LINKEDIN_PASSWORD"
   "hiring-intel||"
