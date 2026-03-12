@@ -46,6 +46,7 @@ Intended for targeted prospect/account research — not bulk data collection. \
 Keep results_wanted low (10-25) and search for specific companies or roles.
 
 Tips:
+  - site_name must be a list of strings, e.g. ["linkedin"] or ["indeed", "glassdoor"].
   - For a specific company: use search_term with the company name, or use \
 linkedin_company_ids for precise LinkedIn filtering.
   - For Indeed/Glassdoor outside the US: set country_indeed (e.g. "UK", "Germany").
