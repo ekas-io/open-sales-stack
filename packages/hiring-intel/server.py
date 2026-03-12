@@ -8,9 +8,11 @@ ZipRecruiter, Bayt) and extract full job descriptions from career page URLs.
 import logging
 import os
 import sys
+from typing import Annotated
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field
 
 # ── Environment ──────────────────────────────────────────────────────────
 
@@ -71,22 +73,54 @@ Greenhouse, Lever, Ashby, Workday, and other ATS platforms."""
 
 @mcp.tool(description=SEARCH_JOBS_DESCRIPTION)
 async def search_jobs(
-    search_term: str,
-    site_name: list[str] | None = None,
-    location: str | None = None,
-    distance: int | None = None,
-    job_type: str | None = None,
-    is_remote: bool | None = None,
-    results_wanted: int = 10,
-    hours_old: int | None = None,
-    country_indeed: str | None = None,
-    linkedin_fetch_description: bool = False,
-    linkedin_company_ids: list[int] | None = None,
-    google_search_term: str | None = None,
-    easy_apply: bool | None = None,
-    enforce_annual_salary: bool = False,
-    offset: int | None = None,
-    description_format: str = "markdown",
+    search_term: Annotated[str, Field(
+        description="Job title, company name, or keywords to search for.\n\nExample: `software engineer at Anthropic`; `sales manager`",
+    )],
+    site_name: Annotated[list[str] | None, Field(
+        description="Job boards to search. Must be a list of strings. Valid values: `\"linkedin\"`, `\"indeed\"`, `\"glassdoor\"`, `\"google\"`, `\"zip_recruiter\"`, `\"bayt\"`. Defaults to all sites if omitted.\n\nExample: `[\"linkedin\"]`; `[\"indeed\", \"glassdoor\"]`",
+    )] = None,
+    location: Annotated[str | None, Field(
+        description="City, state, or country to filter jobs by location.\n\nExample: `New York, NY`; `San Francisco, CA`; `London`",
+    )] = None,
+    distance: Annotated[int | None, Field(
+        description="Search radius in miles around the specified location. Only applies when location is set.\n\nExample: `25`; `50`",
+    )] = None,
+    job_type: Annotated[str | None, Field(
+        description="Filter by employment type. Valid values: `\"fulltime\"`, `\"parttime\"`, `\"internship\"`, `\"contract\"`.\n\nExample: `fulltime`",
+    )] = None,
+    is_remote: Annotated[bool | None, Field(
+        description="Set to `true` to return only remote jobs. Set to `false` to exclude remote jobs. Omit to include both.\n\nExample: `true`",
+    )] = None,
+    results_wanted: Annotated[int, Field(
+        description="Number of job postings to return. Keep low (10-25) for targeted research. Maximum is 50.\n\nExample: `10`",
+    )] = 10,
+    hours_old: Annotated[int | None, Field(
+        description="Only return jobs posted within this many hours. Use to find recent postings.\n\nExample: `72` (last 3 days); `168` (last week)",
+    )] = None,
+    country_indeed: Annotated[str | None, Field(
+        description="Country for Indeed and Glassdoor searches outside the US. Use the country name in English.\n\nExample: `UK`; `Germany`; `Canada`",
+    )] = None,
+    linkedin_fetch_description: Annotated[bool, Field(
+        description="Set to `true` to fetch full job descriptions from LinkedIn. Slower and uses more requests, but returns complete job details. Only applies when `site_name` includes `\"linkedin\"`.\n\nExample: `true`",
+    )] = False,
+    linkedin_company_ids: Annotated[list[int] | None, Field(
+        description="LinkedIn company numeric IDs to filter results to specific companies. More precise than using company name in search_term. Find a company's ID from their LinkedIn URL.\n\nExample: `[1441]` (Google); `[1035]` (Microsoft)",
+    )] = None,
+    google_search_term: Annotated[str | None, Field(
+        description="Custom search query for Google Jobs, using Google search syntax. Required when `site_name` includes `\"google\"`.\n\nExample: `software engineer at Stripe site:careers.stripe.com`",
+    )] = None,
+    easy_apply: Annotated[bool | None, Field(
+        description="Set to `true` to return only LinkedIn Easy Apply jobs. Only applies when `site_name` includes `\"linkedin\"`.\n\nExample: `true`",
+    )] = None,
+    enforce_annual_salary: Annotated[bool, Field(
+        description="Set to `true` to normalize all salary figures to annual amounts, filtering out jobs that don't include salary data.\n\nExample: `true`",
+    )] = False,
+    offset: Annotated[int | None, Field(
+        description="Number of results to skip for pagination. Use with `results_wanted` to retrieve subsequent pages.\n\nExample: `10` (skip first 10, get next page)",
+    )] = None,
+    description_format: Annotated[str, Field(
+        description="Output format for job description text. Valid values: `\"markdown\"` (default), `\"html\"`.\n\nExample: `markdown`",
+    )] = "markdown",
 ) -> str:
     """Search for job postings across major job boards."""
     from tools.search_jobs import search_jobs as _search
@@ -101,9 +135,15 @@ async def search_jobs(
 
 @mcp.tool(description=EXTRACT_JOB_DESCRIPTION_DESCRIPTION)
 async def extract_job_description(
-    url: str,
-    mode: str = "single",
-    max_pages: int = 5,
+    url: Annotated[str, Field(
+        description="URL of a single job posting or a company careers page to crawl. LinkedIn job URLs will be blocked — use ATS platforms (Greenhouse, Lever, Ashby, Workday) or company career sites.\n\nExample: `https://boards.greenhouse.io/stripe/jobs/12345`; `https://company.com/careers`",
+    )],
+    mode: Annotated[str, Field(
+        description="Extraction mode. `\"single\"` fetches one job posting URL and returns its full content as markdown. `\"crawl\"` follows links from a careers page to discover multiple job listings up to `max_pages`.\n\nExample: `single`; `crawl`",
+    )] = "single",
+    max_pages: Annotated[int, Field(
+        description="Maximum number of pages to visit when `mode` is `\"crawl\"`. Higher values discover more jobs but take longer.\n\nExample: `5`; `10`",
+    )] = 5,
 ) -> str:
     """Extract job description from a URL or crawl a careers page."""
     from tools.extract_job_description import extract_job_description as _extract

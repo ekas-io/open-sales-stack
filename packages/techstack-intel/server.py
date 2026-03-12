@@ -7,9 +7,11 @@ Detects technologies used by a company from their website.
 import logging
 import os
 import sys
+from typing import Annotated
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field
 
 # ── Environment ──────────────────────────────────────────────────────────
 
@@ -54,7 +56,11 @@ confidence score (0-1), and evidence trail."""
 
 
 @mcp.tool(description=TOOL_DESCRIPTION)
-async def detect_techstack(url: str) -> str:
+async def detect_techstack(
+    url: Annotated[str, Field(
+        description="URL of the company website to analyze. The `https://` prefix is added automatically if omitted.\n\nExample: `https://stripe.com`; `notion.so`",
+    )],
+) -> str:
     """Detect the technology stack used by a company website."""
     from tools.detect_techstack import detect_techstack as _detect
 

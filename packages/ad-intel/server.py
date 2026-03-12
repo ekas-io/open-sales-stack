@@ -11,9 +11,11 @@ import json
 import logging
 import os
 import sys
+from typing import Annotated
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field
 
 # ── Environment ──────────────────────────────────────────────────────────
 
@@ -88,11 +90,21 @@ landing page URL, and payer info."""
 
 @mcp.tool(description=META_TOOL_DESCRIPTION)
 async def ad_intel_meta_search(
-    query: str,
-    country: str = "US",
-    ad_type: str = "all",
-    start_date_min: str | None = None,
-    start_date_max: str | None = None,
+    query: Annotated[str, Field(
+        description="Keyword, advertiser name, or topic to search for in the Meta Ad Library.\n\nExample: `Anthropic`; `HubSpot`; `climate change`",
+    )],
+    country: Annotated[str, Field(
+        description="Two-letter ISO country code to filter ads by the country they ran in.\n\nExample: `US`; `GB`; `DE`",
+    )] = "US",
+    ad_type: Annotated[str, Field(
+        description="Category of ads to return. Valid values: `\"all\"`, `\"political_and_issue_ads\"`, `\"housing_ads\"`, `\"employment_ads\"`, `\"credit_ads\"`.\n\nExample: `all`; `political_and_issue_ads`",
+    )] = "all",
+    start_date_min: Annotated[str | None, Field(
+        description="Filter to ads that started on or after this date. Format: `YYYY-MM-DD`.\n\nExample: `2025-01-01`",
+    )] = None,
+    start_date_max: Annotated[str | None, Field(
+        description="Filter to ads that started on or before this date. Format: `YYYY-MM-DD`.\n\nExample: `2025-12-31`",
+    )] = None,
 ) -> str:
     """Search the Meta Ad Library for active ads."""
     from tools.meta_ads import ad_intel_meta_search as _search
@@ -133,15 +145,33 @@ async def ad_intel_meta_search(
 
 @mcp.tool(description=LINKEDIN_TOOL_DESCRIPTION)
 async def ad_intel_linkedin_search(
-    account_owner: str | None = None,
-    payer: str | None = None,
-    keyword: str | None = None,
-    countries: str | None = None,
-    date_option: str | None = None,
-    start_date: str | None = None,
-    end_date: str | None = None,
-    impressions_min_value: int | None = None,
-    impressions_max_value: int | None = None,
+    account_owner: Annotated[str | None, Field(
+        description="Name of the company or advertiser that owns the LinkedIn ad account. At least one of account_owner, payer, or keyword must be provided.\n\nExample: `notion`; `hubspot`; `anthropic`",
+    )] = None,
+    payer: Annotated[str | None, Field(
+        description="Name of the entity that paid for the ads. Often the same as account_owner, but can differ for agencies.\n\nExample: `notion`; `hubspot`",
+    )] = None,
+    keyword: Annotated[str | None, Field(
+        description="Keyword to search for in ad content. At least one of account_owner, payer, or keyword must be provided.\n\nExample: `sales automation`; `AI assistant`",
+    )] = None,
+    countries: Annotated[str | None, Field(
+        description="Comma-separated list of two-letter ISO country codes to filter ads by geography.\n\nExample: `US`; `US,GB,DE`",
+    )] = None,
+    date_option: Annotated[str | None, Field(
+        description="Preset date range filter. Valid values: `\"last-30-days\"`, `\"current-month\"`, `\"current-year\"`, `\"last-year\"`, `\"custom-date-range\"`. Use `\"custom-date-range\"` with start_date and end_date for a specific range.\n\nExample: `last-30-days`; `current-year`",
+    )] = None,
+    start_date: Annotated[str | None, Field(
+        description="Start of a custom date range. Only used when date_option is `\"custom-date-range\"`. Format: `YYYY-MM-DD`.\n\nExample: `2025-01-01`",
+    )] = None,
+    end_date: Annotated[str | None, Field(
+        description="End of a custom date range. Only used when date_option is `\"custom-date-range\"`. Format: `YYYY-MM-DD`.\n\nExample: `2025-06-30`",
+    )] = None,
+    impressions_min_value: Annotated[int | None, Field(
+        description="Minimum impression tier (1-10). LinkedIn reports impressions in ranges rather than exact counts. Use with impressions_max_value to filter by spend level.\n\nExample: `1`",
+    )] = None,
+    impressions_max_value: Annotated[int | None, Field(
+        description="Maximum impression tier (1-10). LinkedIn reports impressions in ranges rather than exact counts. Use with impressions_min_value to filter by spend level.\n\nExample: `10`",
+    )] = None,
 ) -> str:
     """Search the LinkedIn Ad Library for ads."""
     from tools.linkedin_ads import ad_intel_linkedin_search as _search

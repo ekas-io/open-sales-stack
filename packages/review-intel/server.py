@@ -7,9 +7,11 @@ TODO: Implement — see packages/website-intel/server.py for reference.
 
 import os
 import sys
+from typing import Annotated
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field
 
 # ── Environment ──────────────────────────────────────────────────────────
 
@@ -28,7 +30,14 @@ mcp = FastMCP("open-sales-stack-review-intel")
 
 
 @mcp.tool()
-async def get_reviews(company: str, platform: str = "g2") -> str:
+async def get_reviews(
+    company: Annotated[str, Field(
+        description="Name of the company to retrieve reviews for.\n\nExample: `Salesforce`; `HubSpot`",
+    )],
+    platform: Annotated[str, Field(
+        description="Review platform to fetch from. Valid values: `\"g2\"`, `\"capterra\"`, `\"glassdoor\"`.\n\nExample: `g2`",
+    )] = "g2",
+) -> str:
     """Get review data for a company from review platforms. Coming soon."""
     from tools.get_reviews import get_reviews as _get
 

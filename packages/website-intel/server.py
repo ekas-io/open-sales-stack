@@ -7,9 +7,11 @@ Scrapes websites and extracts structured data using crawl4ai with LLM extraction
 import logging
 import os
 import sys
+from typing import Annotated
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field
 
 # ── Environment ──────────────────────────────────────────────────────────
 
@@ -51,8 +53,8 @@ Use this tool when you know the specific URL of a website and need to extract \
 particular information in a well-defined, structured format.
 
 Two modes are available:
-  \u2022 'scrape' (default) \u2014 single-page extraction with full JS rendering.
-  \u2022 'crawl' \u2014 multi-page extraction that follows links up to a page limit.
+  • 'scrape' (default) — single-page extraction with full JS rendering.
+  • 'crawl' — multi-page extraction that follows links up to a page limit.
 
 You MUST provide three things:
   1. The target URL
@@ -62,11 +64,21 @@ You MUST provide three things:
 
 @mcp.tool(description=TOOL_DESCRIPTION)
 async def website_intel_extract(
-    url: str,
-    schema: dict,
-    prompt: str,
-    mode: str = "scrape",
-    limit: int = 5,
+    url: Annotated[str, Field(
+        description="Full URL of the page to scrape or the starting page to crawl. Must include `http://` or `https://`.\n\nExample: `https://stripe.com/about`; `https://company.com/pricing`",
+    )],
+    schema: Annotated[dict, Field(
+        description='JSON Schema object defining the exact structure of data to extract. Use standard JSON Schema types (string, number, boolean, array, object). Each property should have a type and description.\n\nExample: `{"type": "object", "properties": {"company_name": {"type": "string"}, "founded_year": {"type": "number"}, "employee_count": {"type": "string"}}}`',
+    )],
+    prompt: Annotated[str, Field(
+        description="Natural-language instruction telling the LLM what information to extract from the page and how to populate the schema fields.\n\nExample: `Extract the company name, the year it was founded, and the number of employees listed on this about page.`",
+    )],
+    mode: Annotated[str, Field(
+        description="Extraction mode. `\"scrape\"` renders and extracts a single page. `\"crawl\"` follows internal links from the starting URL up to `limit` pages, useful for discovering content across a site section.\n\nExample: `scrape`; `crawl`",
+    )] = "scrape",
+    limit: Annotated[int, Field(
+        description="Maximum number of pages to visit when `mode` is `\"crawl\"`. Clamped to 1–10. Ignored in `\"scrape\"` mode.\n\nExample: `5`",
+    )] = 5,
 ) -> str:
     """Scrape or crawl a webpage and extract structured data as JSON."""
     from tools.extract import website_intel_extract as _extract

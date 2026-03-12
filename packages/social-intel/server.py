@@ -7,9 +7,11 @@ Scrapes LinkedIn profiles, companies, and company posts using linkedin_scraper v
 import logging
 import os
 import sys
+from typing import Annotated
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field
 
 # ── Environment ──────────────────────────────────────────────────────────
 
@@ -64,7 +66,11 @@ repost counts, and posted dates."""
 
 
 @mcp.tool(description=PROFILE_DESCRIPTION)
-async def scrape_linkedin_profile(linkedin_url: str) -> str:
+async def scrape_linkedin_profile(
+    linkedin_url: Annotated[str, Field(
+        description="Full URL of the LinkedIn person profile to scrape. Must be a public profile URL in the format `https://www.linkedin.com/in/<username>/`.\n\nExample: `https://www.linkedin.com/in/satyanadella/`",
+    )],
+) -> str:
     """Scrape a LinkedIn profile for structured person data."""
     from tools.profile import scrape_linkedin_profile as _scrape
 
@@ -72,7 +78,11 @@ async def scrape_linkedin_profile(linkedin_url: str) -> str:
 
 
 @mcp.tool(description=COMPANY_DESCRIPTION)
-async def scrape_linkedin_company(linkedin_url: str) -> str:
+async def scrape_linkedin_company(
+    linkedin_url: Annotated[str, Field(
+        description="Full URL of the LinkedIn company page to scrape. Must be in the format `https://www.linkedin.com/company/<company-name>/`.\n\nExample: `https://www.linkedin.com/company/anthropic/`",
+    )],
+) -> str:
     """Scrape a LinkedIn company page for structured company data."""
     from tools.company import scrape_linkedin_company as _scrape
 
@@ -80,7 +90,11 @@ async def scrape_linkedin_company(linkedin_url: str) -> str:
 
 
 @mcp.tool(description=COMPANY_POSTS_DESCRIPTION)
-async def scrape_linkedin_company_posts(linkedin_url: str) -> str:
+async def scrape_linkedin_company_posts(
+    linkedin_url: Annotated[str, Field(
+        description="Full URL of the LinkedIn company page whose posts to scrape. Must be in the format `https://www.linkedin.com/company/<company-name>/`.\n\nExample: `https://www.linkedin.com/company/anthropic/`",
+    )],
+) -> str:
     """Scrape recent posts from a LinkedIn company page."""
     from tools.company_posts import scrape_linkedin_company_posts as _scrape
 
