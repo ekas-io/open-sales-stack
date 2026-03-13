@@ -138,8 +138,6 @@ async def ad_intel_meta_search(
             url=url,
             prompt=EXTRACTION_PROMPT,
             schema=OUTPUT_SCHEMA,
-            mode="scrape",
-            delay_before_return_html=5,
         )
 
         # Normalize the response shape

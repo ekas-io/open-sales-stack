@@ -24,12 +24,10 @@ VALID_DATE_OPTIONS = [
 EXTRACTION_PROMPT = """\
 From the LinkedIn Ad Library page, extract a high-level summary of the ads being run.
 Do NOT list every individual ad. Instead extract:
-- The total number of results shown (e.g. "Showing 1 - 25 of 180 results")
+- The total number of results shown (You will see a string like "xx ads match your search criteria", get that xx number)
 - The ad formats in use (e.g. single image, video, carousel, text)
 - The main themes or topics the ads cover (2-5 bullet points)
 - The typical CTA buttons used (e.g. "Learn More", "Sign Up")
-- Whether ads appear to be currently active
-- The date range most ads are running in
 """
 
 OUTPUT_SCHEMA = {
@@ -61,30 +59,17 @@ OUTPUT_SCHEMA = {
         "date_range": {
             "type": "string",
             "description": "Typical date range ads are running",
-        },
-        "ads": {
-            "type": "array",
-            "description": "Sample of individual ads (up to 5)",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "advertiser_name": {"type": "string"},
-                    "ad_format": {"type": "string"},
-                    "primary_text": {"type": "string"},
-                    "headline": {"type": "string"},
-                    "cta_button": {"type": "string"},
-                    "started_running_on": {"type": "string"},
-                    "media_type": {"type": "string"},
-                },
-            },
-        },
+        }
     },
 }
 
 EMPTY_RESULT = {
     "total_result_count": "0 results",
     "result_count_numeric": 0,
-    "ads": [],
+    "ad_formats": [],
+    "themes": [],
+    "cta_buttons": [],
+    "date_range": None,
 }
 
 LINKEDIN_ACCESS_WARNING = (
@@ -154,8 +139,6 @@ async def ad_intel_linkedin_search(
             url=url,
             prompt=EXTRACTION_PROMPT,
             schema=OUTPUT_SCHEMA,
-            mode="scrape",
-            delay_before_return_html=3,
         )
 
         if not isinstance(data, dict):
@@ -168,12 +151,15 @@ async def ad_intel_linkedin_search(
         result = {
             "total_result_count": data.get("total_result_count", "0 results"),
             "result_count_numeric": data.get("result_count_numeric", 0),
-            "ads": data.get("ads", []),
+            "ad_formats": data.get("ad_formats", []),
+            "themes": data.get("themes", []),
+            "cta_buttons": data.get("cta_buttons", []),
+            "date_range": data.get("date_range"),
             "search_url": url,
         }
 
         # Add access warning if no results (likely due to LinkedIn restrictions)
-        if result["result_count_numeric"] == 0 and not result["ads"]:
+        if result["result_count_numeric"] == 0 and not result["themes"]:
             result["warning"] = LINKEDIN_ACCESS_WARNING.format(url=url)
 
         return result

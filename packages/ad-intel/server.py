@@ -80,9 +80,7 @@ impressions_max_value=10
 Note: LinkedIn Ad Library may return limited results due to access restrictions. \
 The tool will include a warning and direct URL when this occurs.
 
-Returns: total result count, and for each ad: advertiser name, ad format, \
-primary text, headline, CTA, impression range, date range, active status, \
-landing page URL, and payer info."""
+Returns: total result count, and general theme of the Ads."""
 
 
 # ── Meta Ad Library tool ────────────────────────────────────────────────
@@ -194,7 +192,7 @@ async def ad_intel_linkedin_search(
         count = result.get("result_count_numeric", 0)
         summary = f"Found {count} LinkedIn ads for '{search_term}'"
 
-        if count == 0 and not result.get("ads"):
+        if count == 0 and not result.get("themes"):
             return json.dumps({
                 "summary": f"No LinkedIn ads found for '{search_term}'",
                 **result,

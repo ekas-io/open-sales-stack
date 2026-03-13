@@ -25,19 +25,24 @@ from tools.linkedin_ads import ad_intel_linkedin_search  # noqa: E402
 
 # Test 1: End-to-end account owner search — verifies the full LLM extraction pipeline
 @pytest.mark.asyncio
-async def test_linkedin_search_frontegg():
-    """Search for Frontegg's LinkedIn ads (last 30 days) and verify the full extraction pipeline."""
+async def test_linkedin_search_mesh_security():
+    """Search for Mesh Security's LinkedIn ads (last 30 days) and verify the full extraction pipeline."""
     result = await ad_intel_linkedin_search(
-        account_owner="frontegg", date_option="last-30-days"
+        account_owner="Mesh Security", date_option="last-30-days"
     )
 
-    assert "ads" in result, "Should return ads array"
     assert "result_count_numeric" in result, "Should return result count"
+    assert "themes" in result, "Should return themes"
+    assert "ad_formats" in result, "Should return ad_formats"
+    assert "cta_buttons" in result, "Should return cta_buttons"
+    assert result.get("result_count_numeric", 0) > 0, (
+        f"Expected >0 ads but got {result.get('result_count_numeric')}"
+    )
 
-    print(f"Found {result['result_count_numeric']} Frontegg ads")
-    if result["ads"]:
-        ad = result["ads"][0]
-        print(f"  Format: {ad.get('ad_format')} | CTA: {ad.get('cta_button')}")
+    print(f"Found {result['result_count_numeric']} Mesh Security ads")
+    print(f"  Themes: {result.get('themes')}")
+    print(f"  Formats: {result.get('ad_formats')}")
+    print(f"  CTAs: {result.get('cta_buttons')}")
 
 
 # Test 2: Validation — no search criteria should error (fast, no LLM call)
