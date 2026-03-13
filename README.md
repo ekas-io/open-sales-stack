@@ -4,11 +4,7 @@
 
 Give Claude the ability to research companies and prospects using public web data.
 
-<a href="https://glama.ai/mcp/servers/ekas-io/open-sales-stack">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/ekas-io/open-sales-stack/badge" alt="open-sales-stack MCP server" />
-</a>
-
-> **Platform:** macOS only for now. Windows and Linux support coming soon.
+![qualify-demo](https://github.com/user-attachments/assets/f7be1915-0d77-4566-9c57-0113d45eea27)
 
 ---
 
