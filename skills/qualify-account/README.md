@@ -2,8 +2,7 @@
 
 Claude skills that research and qualify sales accounts. Each skill variant uses a different qualification framework — a set of signals tailored to a specific sales motion or ideal customer profile.
 
-![qualify-demo](https://github.com/user-attachments/assets/f7be1915-0d77-4566-9c57-0113d45eea27)
-
+![Qualify Demo](../assets/qualify-demo.gif)
 
 ## Available Skills
 
