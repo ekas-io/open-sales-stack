@@ -2,8 +2,6 @@
 
 A Claude skill that qualifies sales accounts based on whether they show signals of high inbound lead volume. It researches each account across 5 dimensions, applies qualification rules, saves a structured research report to Apollo, and sorts the account into a Qualified or Not Qualified list.
 
-![Qualify Demo](../../assets/qualify-demo.gif)
-
 ## Setup
 
 ### Prerequisites
