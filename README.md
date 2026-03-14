@@ -4,9 +4,15 @@
 
 Give Claude the ability to research companies and prospects using public web data.
 
+![OSS github Demo](./assets/open-sales-stack-github.gif)
+
 ---
 
 ## What's in here
+
+Open Sales Stack contains MCP servers for sales research and skills that teach Claude how to use them in real workflows.
+
+### MCP Servers
 
 | MCP Server | What you get | Status |
 |---|---|---|
@@ -21,6 +27,12 @@ Give Claude the ability to research companies and prospects using public web dat
 | **[financial-reporting-intel](packages/financial-reporting-intel/)** | 10-K/10-Q filings, revenue, growth rate, operating margins, guidance — for public companies | 🔄 In Progress |
 | **[firmographic-intel](packages/firmographic-intel/)** | Employee count, headcount growth, HQ location, founding year, industry, SIC/NAICS codes, legal entity name — all from public sources | 🔄 In Progress |
 | **[github-intel](packages/github-intel/)** | Public repos, stars, contributors, commit activity, open issues, tech stack signals — from GitHub public API | 🔄 In Progress |
+
+### Skills
+
+| Skill | What it does | Status |
+|---|---|---|
+| **[Qualify High Inbound Volume](skills/qualify-account/high-inbound-volume/)** | Researches accounts across 5 signals (website, SDR hiring, LinkedIn ads, funding, product launches) to qualify whether they have high inbound lead volume — saves results to Apollo | ✅ Ready |
 
 An API key from **OpenAI, Anthropic, or Google Gemini** is required for LLM-based extraction. Beyond that, no additional API keys are needed.
 Each MCP runs locally on your machine. Your IP, your requests — no proxy infrastructure, no rate limiting concerns.
