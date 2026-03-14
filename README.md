@@ -4,8 +4,6 @@
 
 Give Claude the ability to research companies and prospects using public web data.
 
-![qualify-demo](https://github.com/user-attachments/assets/f7be1915-0d77-4566-9c57-0113d45eea27)
-
 ---
 
 ## What's in here
