@@ -1,0 +1,51 @@
+{
+  "skill_name": "qualify-high-inbound-volume",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/qualify-high-inbound-volume Datadog",
+      "expected_output": "A complete research report for Datadog covering all 5 signal dimensions. Datadog is a large public SaaS company with a free trial, self-serve signup, active LinkedIn ads, and likely SDR hiring — should be QUALIFIED with multiple signals matching. The report should follow the exact template format and save research notes to Apollo.",
+      "files": [],
+      "expectations": [
+        "The output includes a qualification verdict (QUALIFIED or NOT QUALIFIED)",
+        "The output contains a 5-row signal table with Match/No Match/Inconclusive for each signal",
+        "The output includes a Website Intelligence section with self-serve signup, pricing, free trial, product launches, and CTAs",
+        "The output includes an SDR/BDR job listing section",
+        "The output includes a LinkedIn Ads section with ad count and themes",
+        "The output includes a Recent Funding section",
+        "The output includes a Product Launch section",
+        "The skill called view_account to fetch account data",
+        "The skill called organization_job_postings using the organization_id (not account ID)",
+        "The skill called update_account to save research notes",
+        "The skill called update_account to add the account to a list"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "hey can you qualify this account for me? the domain is freshworks.com, i want to see if they're worth pursuing",
+      "expected_output": "The skill should resolve freshworks.com to an Apollo account by searching, then produce a full research report. Freshworks is a public SaaS company with free trials and self-serve — should be QUALIFIED. The casual tone of the prompt should not affect the structured output.",
+      "files": [],
+      "expectations": [
+        "The skill searched Apollo using the domain to find the account",
+        "The output follows the research report template format",
+        "The output includes all 5 signal sections",
+        "The qualification verdict is present and clearly stated",
+        "Research notes were saved to the Apollo custom field",
+        "The account was added to the appropriate Apollo list"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/qualify-high-inbound-volume McKinsey & Company",
+      "expected_output": "A complete research report for McKinsey. As a consulting firm (not a SaaS company), McKinsey likely has no self-serve signup, no free trial, and no product launches. They probably have LinkedIn ads but for thought leadership/recruiting, not lead generation. Should likely be NOT QUALIFIED or have very few matching signals. The report should still cover all 5 dimensions thoroughly.",
+      "files": [],
+      "expectations": [
+        "The output includes all 5 signal sections even though most are negative",
+        "Missing/negative signals use the correct fallback phrases from the template",
+        "The qualification verdict reflects the actual signal analysis",
+        "The summary table shows the correct count of matching signals",
+        "Research notes were saved even though the account may be disqualified"
+      ]
+    }
+  ]
+}
