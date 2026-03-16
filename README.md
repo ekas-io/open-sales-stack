@@ -4,7 +4,7 @@
 
 Give Claude the ability to research companies and prospects using public web data.
 
-![OSS github Demo](./assets/open-sales-stack-github.gif)
+![OSS github Demo](https://github.com/ekas-io/open-sales-stack/blob/main/assets/open-sales-stack-github.gif)
 
 ---
 
