@@ -39,6 +39,10 @@ Each MCP runs locally on your machine. Your IP, your requests — no proxy infra
 
 ---
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/ekas-io-open-sales-stack).
+
 ## Setup
 
 You'll need two things installed before starting:
