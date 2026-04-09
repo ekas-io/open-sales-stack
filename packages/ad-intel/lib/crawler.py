@@ -64,7 +64,7 @@ def _build_run_config(
     return CrawlerRunConfig(
         extraction_strategy=extraction,
         verbose=False,
-        page_timeout=60000,
+        page_timeout=600000,
     )
 
 
@@ -109,7 +109,7 @@ async def fetch_markdown(url: str, delay_before_return_html: int = 3) -> str:
     """Fetch a page and return its markdown without LLM extraction."""
     config = CrawlerRunConfig(
         delay_before_return_html=delay_before_return_html,
-        page_timeout=60000,
+        page_timeout=600000,
         verbose=False,
     )
     crawler = await get_crawler()

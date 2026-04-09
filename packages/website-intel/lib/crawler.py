@@ -65,7 +65,7 @@ def _build_run_config(
         schema=schema,
         input_format=input_format,
     )
-    kwargs: dict[str, Any] = {"extraction_strategy": extraction, "verbose": False, "page_timeout": 60000}
+    kwargs: dict[str, Any] = {"extraction_strategy": extraction, "verbose": False, "page_timeout": 600000}
     if mode == "crawl":
         kwargs["deep_crawl_strategy"] = BFSDeepCrawlStrategy(
             max_depth=2, max_pages=limit, include_external=False,
